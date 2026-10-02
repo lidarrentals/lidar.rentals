@@ -178,9 +178,8 @@ export default function HomePage() {
                 Professional Onsite 3D Scanning
               </h2>
               <p className="text-slate-300 leading-relaxed mb-6">
-                Our certified technicians come to your site with state-of-the-art LiDAR scanners
-                for as-built documentation, BIM modeling, building envelope analysis, and reverse
-                engineering. Book by the day or week with real-time availability.
+                Our certified technicians will come to your site with state-of-the-art LiDAR scanners and autonomous drones for BVLOS/ GPS Denied mapping
+                for underground mining. Book by the day or week with real-time availability.
               </p>
               <button
                 onClick={() => navigate('/services')}
