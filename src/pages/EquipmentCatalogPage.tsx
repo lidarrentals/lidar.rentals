@@ -14,9 +14,10 @@ export default function EquipmentCatalogPage() {
 
   useEffect(() => {
     (async () => {
-      const [eqRes, catRes] = await Promise.all([
-        supabase.from('equipment').select('*, categories(*)').eq('is_active', true).order('created_at', { ascending: false }),
-        supabase.from('categories').select('*').order('name'),
+     const [eqRes] = await Promise.all([
+        supabase.from('equipment').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+      ]);
+const catRes = { data: [], error: null };
       ]);
       setEquipment(eqRes.data || []);
       setCategories((catRes.data || []).filter(c => c.slug !== 'onsite-services'));
