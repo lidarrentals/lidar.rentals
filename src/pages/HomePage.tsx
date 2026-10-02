@@ -24,8 +24,8 @@ export default function HomePage() {
   }, []);
 
   const features = [
-    { icon: Truck, title: 'Free Delivery', desc: 'On rentals over $500 within 50 miles' },
-    { icon: ShieldCheck, title: 'Insured Equipment', desc: 'All equipment fully insured' },
+    { icon: Truck, title: 'Free Delivery', desc: 'On rentals over $5000 within 200 Kilometers from Toronto' },
+    { icon: ShieldCheck, title: 'Insured Equipment Options', desc: 'All equipment must be fully insured' },
     { icon: Clock, title: 'Flexible Rentals', desc: '1 day to 1 month rental periods' },
     { icon: Headphones, title: '24/7 Support', desc: 'Expert help when you need it' },
   ];
@@ -52,8 +52,7 @@ export default function HomePage() {
               LiDAR-ready equipment for every job
             </h1>
             <p className="mt-6 text-lg text-slate-300 leading-relaxed max-w-xl">
-              From LiDAR drones and survey gear to precision tools, lidar.rentals offers flexible rental periods,
-              real-time availability, and seamless checkout. Plus, professional onsite 3D scanning services.
+              Autonomous LiDAR drone rentals for GPS Denied environoments, 3D SLAM Mobile Lidar scanners and accessories, lidar.rentals offers flexible rental periods real-time availability, and seamless checkout. Plus, professional onsite 3D scanning services.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <button
