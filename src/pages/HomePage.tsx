@@ -52,7 +52,9 @@ export default function HomePage() {
               LiDAR-ready equipment for every job
             </h1>
             <p className="mt-6 text-lg text-slate-300 leading-relaxed max-w-xl">
-              Autonomous LiDAR drone rentals for GPS Denied environoments, 3D SLAM Mobile Lidar scanners and accessories, lidar.rentals offers flexible rental periods real-time availability, and seamless checkout. Plus, professional onsite 3D scanning services.
+              Autonomous LiDAR drone rentals for GPS Denied environoments, 3D SLAM Mobile Lidar scanners and accessories. 
+              
+              lidar.rentals offers flexible rental periods with real-time availability and a seamless checkout. Plus, professional onsite 3D scanning services and emergency services.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row gap-4">
               <button
