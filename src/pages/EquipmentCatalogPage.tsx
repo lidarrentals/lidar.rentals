@@ -18,7 +18,7 @@ export default function EquipmentCatalogPage() {
         supabase.from('equipment').select('*').eq('is_active', true).order('created_at', { ascending: false }),
       ]);
 const catRes = { data: [], error: null };
-      ]);
+    
       setEquipment(eqRes.data || []);
       setCategories((catRes.data || []).filter(c => c.slug !== 'onsite-services'));
       setLoading(false);
