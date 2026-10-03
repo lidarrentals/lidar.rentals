@@ -95,34 +95,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-slate-900">Browse by Category</h2>
-          <button
-            onClick={() => navigate('/equipment')}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-1"
-          >
-            View all <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {categories.filter(c => c.slug !== 'onsite-services').map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => navigate(`/equipment?category=${cat.slug}`)}
-              className="group p-6 bg-white rounded-xl border border-slate-200 hover:border-blue-200 hover:shadow-lg transition-all text-left"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center text-blue-600 mb-3 group-hover:scale-110 transition-transform">
-                <span className="text-2xl">📦</span>
-              </div>
-              <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors">
-                {cat.name}
-              </h3>
-            </button>
-          ))}
-        </div>
-      </section>
+
 
       {/* Featured equipment */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
