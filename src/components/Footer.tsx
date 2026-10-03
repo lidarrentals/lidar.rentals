@@ -15,7 +15,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm text-slate-400 max-w-md leading-relaxed">
-              Professional equipment rental and onsite 3D scanning services for construction,
+              Professional equipment rental and onsite 3D scanning services for mining,
               industrial, and engineering projects. Quality equipment, competitive pricing,
               and expert support.
             </p>
@@ -26,7 +26,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-blue-400" />
-                (555) 123-4567
+                (416)789-5304
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-400" />
@@ -34,7 +34,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-400" />
-                1234 Industrial Blvd, Suite 200
+                Toronto, Ontario Canada
               </li>
             </ul>
           </div>
