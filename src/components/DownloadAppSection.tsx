@@ -123,8 +123,8 @@ export default function DownloadAppSection() {
                   <div className="flex-1 bg-slate-50 p-3 space-y-2.5 overflow-hidden">
                     <div className="h-24 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex flex-col justify-center px-3">
                       <span className="text-[10px] text-blue-100 font-medium">Featured</span>
-                      <span className="text-xs font-bold text-white">Mini Excavator</span>
-                      <span className="text-[10px] text-blue-200">From $350/day</span>
+                      <span className="text-xs font-bold text-white">3D Mobile Lidar Scanner</span>
+                      <span className="text-[10px] text-blue-200">From $995/day</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div className="h-20 rounded-lg bg-white border border-slate-100 p-2">
