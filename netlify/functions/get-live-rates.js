@@ -1,8 +1,5 @@
-const { Shippo } = require('shippo');
-const shippo = new Shippo({ apiKeyHeader: `ShippoToken ${process.env.SHIPPO_API_KEY}` });
-
 exports.handler = async (event, context) => {
-  // Handle preflight browser checks
+  // Handle preflight browser security checks
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 200,
@@ -20,7 +17,6 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Force clean extraction of the address parameters payload object block
     const requestData = JSON.parse(event.body || '{}');
     const customerAddress = requestData.customerAddress;
 
@@ -28,22 +24,12 @@ exports.handler = async (event, context) => {
       return {
         statusCode: 400,
         headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ error: "Missing required address fields layout properties." })
+        body: JSON.stringify({ error: "Missing required postal details." })
       };
     }
 
-    // Consolidated package dimensions for your rental pieces
-    const packageSpecs = {
-      length: "12",
-      width: "10",
-      height: "6",
-      distance_unit: "in",
-      weight: "5",
-      mass_unit: "lb"
-    };
-
-    // Corrected snake_case variables mapped directly for the official shippo engine
-    const shipment = await shippo.shipments.create({
+    // Secure payload packet configuration built manually
+    const shipmentPayload = {
       address_from: {
         name: "RentPro Equipment",
         street1: "123 Main Street",
@@ -58,29 +44,50 @@ exports.handler = async (event, context) => {
         city: customerAddress.city,
         state: customerAddress.state || "ON",
         zip: customerAddress.zip,
-        country: "CA" // Force Canada target lookup alignment rules
+        country: "CA"
       },
-      parcels: [packageSpecs],
+      parcels: [{
+        length: "12",
+        width: "10",
+        height: "6",
+        distance_unit: "in",
+        weight: "5",
+        mass_unit: "lb"
+      }],
       async: false
+    };
+
+    // Direct fetch lookup straight to Shippo's endpoint core bypassing local package setups
+    const response = await fetch('https://goshippo.com', {
+      method: 'POST',
+      headers: {
+        'Authorization': `ShippoToken ${process.env.SHIPPO_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(shipmentPayload)
     });
 
-    if (!shipment.rates || shipment.rates.length === 0) {
+    const shipment = await response.json();
+
+    // Catch account restrictions or invalid token indicators returned by Shippo's portal
+    if (!response.ok || !shipment.rates) {
+      console.error("Shippo Core Error:", shipment);
       return {
         statusCode: 200,
-        headers: { 
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*" 
-        },
-        body: JSON.stringify({ rates: [], message: "No carriers returned pricing models for this code." })
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ 
+          rates: [], 
+          message: "Account initialization hold. Verify Shippo API key settings or token tier status." 
+        })
       };
     }
 
-    // Extract rates safely with optional chaining selectors
+    // Map the rate outputs safely into clean matching line structures
     const liveRates = shipment.rates.map(rate => ({
       id: rate.object_id,
       provider: rate.provider,
-      service: rate.servicelevel?.name || 'Standard Carrier Shipping',
-      amount: (parseFloat(rate.amount) * 1.80).toFixed(2), // Factor round-trip return labels
+      service: rate.servicelevel?.name || 'Standard Shipping',
+      amount: (parseFloat(rate.amount) * 1.80).toFixed(2), // Factoring the round-trip return leg fee
       currency: rate.currency
     }));
 
@@ -94,11 +101,11 @@ exports.handler = async (event, context) => {
     };
 
   } catch (error) {
-    console.error("Shipping Calculation Error:", error);
+    console.error("Internal Error:", error);
     return {
       statusCode: 500,
       headers: { "Access-Control-Allow-Origin": "*" },
-      body: JSON.stringify({ error: "Failed to fetch live shipping rates.", details: error.message })
+      body: JSON.stringify({ error: "Failed to calculate live rate quotes.", details: error.message })
     };
   }
 };
