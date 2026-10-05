@@ -118,7 +118,7 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
                     <span className="text-xs text-slate-500">{rate.service}</span>
                   </div>
                 </div>
-                <span className="font-bold text-base text-slate-900">\${rate.amount}</span>
+                <span className="font-bold text-base text-slate-900">${rate.amount}</span>
               </label>
             ))}
           </div>
