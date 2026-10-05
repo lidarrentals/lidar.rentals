@@ -192,7 +192,7 @@ return (
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <ShippingCalculator onRateSelect={(amount) => setShippingCost(amount)} />
+{/* <ShippingCalculator onRateSelect={(amount) => setShippingCost(amount)} /> */}
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
