@@ -8,7 +8,7 @@ exports.handler = async (event, context) => {
       statusCode: 200,
       headers: {
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
         "Access-Control-Allow-Methods": "POST, OPTIONS"
       },
       body: ''
@@ -20,7 +20,17 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const { customerAddress } = JSON.parse(event.body);
+    // Force clean extraction of the address parameters payload object block
+    const requestData = JSON.parse(event.body || '{}');
+    const customerAddress = requestData.customerAddress;
+
+    if (!customerAddress || !customerAddress.zip) {
+      return {
+        statusCode: 400,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        body: JSON.stringify({ error: "Missing required address fields layout properties." })
+      };
+    }
 
     // Consolidated package dimensions for your rental pieces
     const packageSpecs = {
@@ -35,7 +45,7 @@ exports.handler = async (event, context) => {
     // Corrected snake_case variables mapped directly for the official shippo engine
     const shipment = await shippo.shipments.create({
       address_from: {
-        name: "Your Rental Company",
+        name: "RentPro Equipment",
         street1: "123 Main Street",
         city: "Toronto",
         state: "ON",
@@ -43,31 +53,33 @@ exports.handler = async (event, context) => {
         country: "CA"
       },
       address_to: {
-        name: customerAddress.name,
+        name: customerAddress.name || "Customer",
         street1: customerAddress.street1,
         city: customerAddress.city,
-        state: customerAddress.state,
+        state: customerAddress.state || "ON",
         zip: customerAddress.zip,
-        country: customerAddress.country || 'CA'
+        country: "CA" // Force Canada target lookup alignment rules
       },
       parcels: [packageSpecs],
       async: false
     });
 
-    // Check if rates were successfully generated
     if (!shipment.rates || shipment.rates.length === 0) {
       return {
         statusCode: 200,
-        headers: { "Access-Control-Allow-Origin": "*" },
-        body: JSON.stringify({ rates: [], message: "No rates returned. Check address accuracy." })
+        headers: { 
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*" 
+        },
+        body: JSON.stringify({ rates: [], message: "No carriers returned pricing models for this code." })
       };
     }
 
-    // Extract rates using the exact official object properties
+    // Extract rates safely with optional chaining selectors
     const liveRates = shipment.rates.map(rate => ({
       id: rate.object_id,
       provider: rate.provider,
-      service: rate.servicelevel?.name || 'Standard Shipping',
+      service: rate.servicelevel?.name || 'Standard Carrier Shipping',
       amount: (parseFloat(rate.amount) * 1.80).toFixed(2), // Factor round-trip return labels
       currency: rate.currency
     }));
