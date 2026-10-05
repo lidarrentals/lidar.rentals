@@ -42,39 +42,51 @@ export default function CheckoutPage() {
       </div>
     );
   }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.customer_name || !form.customer_email) return;
+    if (!form.customer_name || !form.customer_email) {
+      alert('Please fill out your Full Name and Email Address before payment.');
+      return;
+    }
+    
+    if (shippingCost === 0) {
+      alert('Please input your address metrics and calculate a delivery option first.');
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      const { data: order, error: orderError } = await supabase
-        .from('orders')
-        .insert({ ...form, shipping_cost: shippingCost, total: total + shippingCost, status: 'pending' })
-        .select().single();
+      // Create the live session links matrix
+      const response = await fetch('/.netlify/functions/create-stripe-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: items,
+          shippingCost: shippingCost,
+          total: total
+        })
+      });
 
-      if (orderError) throw orderError;
+      const sessionData = await response.json();
 
-      const orderItems = items.map(item => ({
-        order_id: order.id,
-        item_type: item.itemType,
-        item_id: item.itemId,
-        item_name: item.name,
-        rental_period: item.rentalPeriod,
-        start_date: item.startDate,
-        end_date: item.endDate,
-        quantity: item.quantity,
-        unit_price: item.unitPrice,
-        line_total: item.lineTotal,
-      }));
+      if (sessionData.url) {
+        // Cache your customer info data placeholder records to Supabase before leaving the view if wanted
+        await supabase.from('orders').insert({
+          ...form,
+          shipping_cost: shippingCost,
+          total: total + shippingCost,
+          status: 'pending'
+        });
 
-      await supabase.from('order_items').insert(orderItems);
-      setOrderId(order.id);
-      clearCart();
-      setSuccess(true);
-    } catch (err) {
-      console.error(err);
+        // Automatically send the browser page layout focus onto Stripe's payment screen portal
+        window.location.href = sessionData.url;
+      } else {
+        throw new Error(sessionData.error || 'Failed to create payment session token links.');
+      }
+    } catch (err: any) {
+      console.error('Checkout error layout:', err);
+      alert('Payment initialization stalled: ' + err.message);
     } finally {
       setSubmitting(false);
     }
