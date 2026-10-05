@@ -112,8 +112,7 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
-
-  return (
+    return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button
         onClick={() => navigate('/equipment')}
@@ -126,7 +125,7 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Checkout</h1>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Form Column */}
+        {/* Left Column: Form Info */}
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h2>
@@ -187,8 +186,8 @@ export default function CheckoutPage() {
             />
           </div>
 
-          {/* Embedded Dynamic Shipping Calculator */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-2">
+          {/* Embedded Dynamic Shipping Calculator Container */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-4">
             <ShippingCalculator />
           </div>
 
@@ -229,23 +228,27 @@ export default function CheckoutPage() {
                   <div>
                     <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
                     <p className="text-xs text-slate-500 mt-0.5">
-{item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
+                      {item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
+                    </p>
+                  </div>
+                  <span className="font-semibold text-slate-900 text-sm">{formatCurrency(item.lineTotal)}</span>
+                </div>
+              ))}
+            </div>
 
-
-{formatCurrency(item.lineTotal)}
-
-))}
-Rental Subtotal
-{formatCurrency(total)}
-
-
-Estimated Total
-{formatCurrency(total)}
-
-
-
-
-
-
-);
+            <div className="border-t border-slate-200 pt-4 space-y-2">
+              <div className="flex justify-between text-sm text-slate-600">
+                <span>Rental Subtotal</span>
+                <span>{formatCurrency(total)}</span>
+              </div>
+              <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
+                <span>Estimated Total</span>
+                <span>{formatCurrency(total)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
