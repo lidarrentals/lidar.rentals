@@ -72,7 +72,10 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.customer_name || !form.customer_email) return;
+    if (!form.customer_name || !form.customer_email) {
+      alert('Please fill out your Full Name and Email Address.');
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -118,7 +121,7 @@ export default function CheckoutPage() {
     }
   };
 
-return (
+  return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button
         onClick={() => navigate('/equipment')}
@@ -131,6 +134,7 @@ return (
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Checkout</h1>
 
       <div className="grid lg:grid-cols-2 gap-8">
+        {/* Left Column: Form Details */}
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h2>
@@ -191,8 +195,9 @@ return (
             />
           </div>
 
+          {/* Fully Connected Calculator Component Box */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-{/* <ShippingCalculator onRateSelect={(amount) => setShippingCost(amount)} /> */}
+            <ShippingCalculator onRateSelect={(amount) => setShippingCost(amount)} />
           </div>
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
@@ -207,6 +212,7 @@ return (
           </div>
           
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={submitting}
             className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
@@ -222,40 +228,36 @@ return (
           </button>
         </div>
 
+        {/* Right Column: Order Summary Calculations Panel */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
             <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto mb-4 pr-2">
               {items.map((item, idx) => (
                 <div key={idx} className="py-3 first:pt-0 last:pb-0 flex justify-between items-start gap-4">
-                  <div>
-                    <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
-                    </p>
-                  </div>
-                  <span className="font-semibold text-slate-900 text-sm">{formatCurrency(item.lineTotal)}</span>
-                </div>
-              ))}
-            </div>
+{item.name}
 
-            <div className="border-t border-slate-200 pt-4 space-y-2">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Rental Subtotal</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Round-Trip Shipping</span>
-                <span>{shippingCost > 0 ? formatCurrency(shippingCost) : 'Calculated next step'}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
-                <span>Estimated Total</span>
-                <span>{formatCurrency(total + shippingCost)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+{item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
+
+
+{formatCurrency(item.lineTotal)}
+
+))}
+Rental Subtotal
+{formatCurrency(total)}
+
+
+Round-Trip Shipping
+{shippingCost > 0 ? formatCurrency(shippingCost) : 'Calculated in form'}
+
+
+Estimated Total
+{formatCurrency(total + shippingCost)}
+
+
+
+
+
+
+);
 }
