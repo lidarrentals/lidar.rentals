@@ -4,6 +4,8 @@ import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 import { navigate } from '@/lib/router';
 import { formatCurrency, formatDate } from '@/lib/pricing';
+import ShippingCalculator from '../ShippingCalculator';
+
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
