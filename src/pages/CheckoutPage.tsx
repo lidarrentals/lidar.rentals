@@ -6,7 +6,6 @@ import { navigate } from '@/lib/router';
 import { formatCurrency, formatDate } from '@/lib/pricing';
 import ShippingCalculator from '../ShippingCalculator';
 
-
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const [submitting, setSubmitting] = useState(false);
@@ -127,8 +126,8 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Checkout</h1>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Form Column */}
+        <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h2>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -188,6 +187,11 @@ export default function CheckoutPage() {
             />
           </div>
 
+          {/* Embedded Dynamic Shipping Calculator */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-2">
+            <ShippingCalculator />
+          </div>
+
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Additional Notes</h2>
             <textarea
@@ -195,76 +199,33 @@ export default function CheckoutPage() {
               value={form.notes}
               onChange={e => setForm({ ...form, notes: e.target.value })}
               className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Any special requirements or instructions..."
+              placeholder="Any special handling instructions..."
             />
           </div>
-
+          
           <button
-            type="submit"
+            onClick={handleSubmit}
             disabled={submitting}
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+            className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
           >
             {submitting ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Processing...
-              </>
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
               <>
                 <CreditCard className="w-5 h-5" />
-                Submit Order ({formatCurrency(total)})
+                Place Rental Order ({formatCurrency(total)})
               </>
             )}
           </button>
-        </form>
-
-        {/* Order summary */}
-        <div className="lg:sticky lg:top-24 h-fit">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
-            <div className="space-y-4 max-h-[400px] overflow-y-auto">
-              {items.map(item => (
-                <div key={item.id} className="flex gap-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0">
-                  {item.imageUrl && (
-                    <img src={item.imageUrl} alt={item.name} className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-sm font-semibold text-slate-900 truncate">{item.name}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {item.periodLabel} · Qty {item.quantity}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {formatDate(item.startDate)} — {formatDate(item.endDate)}
-                    </p>
-                    <p className="text-sm font-bold text-slate-900 mt-1">
-                      {formatCurrency(item.lineTotal)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-4 pt-4 border-t border-slate-200 space-y-2">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Items</span>
-                <span>{items.length}</span>
-              </div>
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Subtotal</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold text-slate-900 pt-2 border-t border-slate-100">
-                <span>Total</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-slate-400 mt-3 text-center">
-            By submitting, you agree to our rental terms. Payment is collected upon confirmation.
-          </p>
         </div>
-      </div>
-    </div>
-  );
-}
+
+        {/* Right Side Column: Cart Summary Area */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-6">
+            <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
+            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto mb-4 pr-2">
+              {items.map((item, idx) => (
+                <div key={idx} className="py-3 first:pt-0 last:pb-0 flex justify-between items-start gap-4">
+                  <div>
+                    <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
