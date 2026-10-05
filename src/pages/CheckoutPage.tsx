@@ -229,3 +229,23 @@ export default function CheckoutPage() {
                   <div>
                     <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
                     <p className="text-xs text-slate-500 mt-0.5">
+{item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
+
+
+{formatCurrency(item.lineTotal)}
+
+))}
+Rental Subtotal
+{formatCurrency(total)}
+
+
+Estimated Total
+{formatCurrency(total)}
+
+
+
+
+
+
+);
+}
