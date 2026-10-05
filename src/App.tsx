@@ -7,6 +7,7 @@ import EquipmentDetailPage from '@/pages/EquipmentDetailPage';
 import ServicesPage from '@/pages/ServicesPage';
 import ServiceDetailPage from '@/pages/ServiceDetailPage';
 import CheckoutPage from '@/pages/CheckoutPage';
+import ShippingCalculator from './ShippingCalculator';
 
 function Routes() {
   const route = useRouter();
