@@ -8,6 +8,21 @@ interface SummaryProps {
 }
 
 export default function CheckoutSummary({ items, total, shippingCost }: SummaryProps) {
+  // Safe Date parsing utility wrapper to prevent layout thread freezing
+  const renderSafeDate = (dateVal: any) => {
+    if (!dateVal) return 'N/A';
+    try {
+      const parsedDate = new Date(dateVal);
+      // If the date parsing results in an invalid timestamp, fall back gracefully
+      if (isNaN(parsedDate.getTime())) {
+        return String(dateVal);
+      }
+      return formatDate(parsedDate);
+    } catch (e) {
+      return String(dateVal);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-6">
@@ -18,7 +33,7 @@ export default function CheckoutSummary({ items, total, shippingCost }: SummaryP
               <div>
                 <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
+                  {item.quantity}x • {item.rentalPeriod} days ({renderSafeDate(item.startDate)} - {renderSafeDate(item.endDate)})
                 </p>
               </div>
               <span className="font-semibold text-slate-900 text-sm">{formatCurrency(item.lineTotal)}</span>
