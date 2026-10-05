@@ -11,8 +11,6 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState<string>('');
-  
-  // New state track variable for the dynamic live shipping cost selection
   const [shippingCost, setShippingCost] = useState<number>(0);
 
   const [form, setForm] = useState({
@@ -78,15 +76,14 @@ export default function CheckoutPage() {
     setSubmitting(true);
 
     try {
-      // Calculate final combined total (rental price + shipping fee)
       const finalGrandTotal = total + shippingCost;
 
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
           ...form,
-          shipping_cost: shippingCost, // Stores the shipping price in your database row column!
-          total: finalGrandTotal,       // Stores the true combined grand total cost!
+          shipping_cost: shippingCost,
+          total: finalGrandTotal,
           status: 'pending',
         })
         .select()
@@ -120,7 +117,8 @@ export default function CheckoutPage() {
       setSubmitting(false);
     }
   };
-  return (
+
+return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button
         onClick={() => navigate('/equipment')}
@@ -133,7 +131,6 @@ export default function CheckoutPage() {
       <h1 className="text-3xl font-bold text-slate-900 mb-8">Checkout</h1>
 
       <div className="grid lg:grid-cols-2 gap-8">
-        {/* Left Column: Form Info */}
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h2>
@@ -194,7 +191,6 @@ export default function CheckoutPage() {
             />
           </div>
 
-          {/* Connected Shipping Calculator: Listens for chosen pricing adjustments */}
           <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
             <ShippingCalculator onRateSelect={(amount) => setShippingCost(amount)} />
           </div>
@@ -226,7 +222,6 @@ export default function CheckoutPage() {
           </button>
         </div>
 
-        {/* Right Side Column: Dynamic Summary Pricing Calculation Panel */}
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
@@ -256,147 +251,6 @@ export default function CheckoutPage() {
               <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
                 <span>Estimated Total</span>
                 <span>{formatCurrency(total + shippingCost)}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-    return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <button
-        onClick={() => navigate('/equipment')}
-        className="flex items-center gap-1 text-sm text-slate-500 hover:text-blue-600 transition-colors mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        Continue shopping
-      </button>
-
-      <h1 className="text-3xl font-bold text-slate-900 mb-8">Checkout</h1>
-
-      <div className="grid lg:grid-cols-2 gap-8">
-        {/* Left Column: Form Info */}
-        <div className="space-y-5">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
-                <input
-                  required
-                  type="text"
-                  value={form.customer_name}
-                  onChange={e => setForm({ ...form, customer_name: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="John Smith"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Email *</label>
-                <input
-                  required
-                  type="email"
-                  value={form.customer_email}
-                  onChange={e => setForm({ ...form, customer_email: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="john@company.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone</label>
-                <input
-                  type="tel"
-                  value={form.customer_phone}
-                  onChange={e => setForm({ ...form, customer_phone: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="(555) 123-4567"
-                />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Company</label>
-                <input
-                  type="text"
-                  value={form.company}
-                  onChange={e => setForm({ ...form, company: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="ABC Construction LLC"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Delivery / Site Address</h2>
-            <textarea
-              rows={3}
-              value={form.shipping_address}
-              onChange={e => setForm({ ...form, shipping_address: e.target.value })}
-              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="1234 Job Site Rd, City, State 12345"
-            />
-          </div>
-
-          {/* Embedded Dynamic Shipping Calculator Container */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4">
-            <ShippingCalculator />
-          </div>
-
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Additional Notes</h2>
-            <textarea
-              rows={3}
-              value={form.notes}
-              onChange={e => setForm({ ...form, notes: e.target.value })}
-              className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-              placeholder="Any special handling instructions..."
-            />
-          </div>
-          
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="w-full py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {submitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <CreditCard className="w-5 h-5" />
-                Place Rental Order ({formatCurrency(total)})
-              </>
-            )}
-          </button>
-        </div>
-
-        {/* Right Side Column: Cart Summary Area */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 sticky top-6">
-            <h2 className="text-lg font-bold text-slate-900 mb-4">Order Summary</h2>
-            <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto mb-4 pr-2">
-              {items.map((item, idx) => (
-                <div key={idx} className="py-3 first:pt-0 last:pb-0 flex justify-between items-start gap-4">
-                  <div>
-                    <h4 className="font-medium text-slate-900 text-sm">{item.name}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {item.quantity}x • {item.rentalPeriod} days ({formatDate(item.startDate)} - {formatDate(item.endDate)})
-                    </p>
-                  </div>
-                  <span className="font-semibold text-slate-900 text-sm">{formatCurrency(item.lineTotal)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="border-t border-slate-200 pt-4 space-y-2">
-              <div className="flex justify-between text-sm text-slate-600">
-                <span>Rental Subtotal</span>
-                <span>{formatCurrency(total)}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100">
-                <span>Estimated Total</span>
-                <span>{formatCurrency(total)}</span>
               </div>
             </div>
           </div>
