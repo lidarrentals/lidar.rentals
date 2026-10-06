@@ -3,12 +3,11 @@ import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 import { Calendar, Shield, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
-import { navigate, getParams } from '@/lib/router';
+import { navigate } from '@/lib/router';
 import type { Equipment } from '@/types';
 import AccessoryModal from '@/components/AccessoryModal';
 
 export default function EquipmentDetailPage() {
-  const params = getParams();
   const { addToCart, setIsOpen } = useCart();
   
   const [equipment, setEquipment] = useState<Equipment | null>(null);
@@ -18,18 +17,24 @@ export default function EquipmentDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [rentalDays, setRentalDays] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  
-  // Explicitly initialize modal tracking gates to start as hidden
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Extract the URL id parameter directly using native location methods
+  const getNativeProductId = () => {
+    const hash = window.location.hash || '';
+    const parts = hash.split('/');
+    return parts[parts.length - 1] || null;
+  };
+
   useEffect(() => {
-    if (params?.id) {
-      fetchProductDetails(params.id);
+    const productId = getNativeProductId();
+    if (productId) {
+      fetchProductDetails(productId);
     }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
     });
-  }, [params?.id]);
+  }, []);
 
   useEffect(() => {
     if (startDate && endDate) {
@@ -55,17 +60,13 @@ export default function EquipmentDetailPage() {
   const handleFinishBundleAddToCart = (selectedAccessories: Equipment[]) => {
     if (!equipment) return;
 
-    // 1. Commit the primary item choice selection
     addToCart(equipment, rentalDays, startDate, endDate, quantity);
 
-    // 2. Commit every individual accessory chosen right next to it
     selectedAccessories.forEach(acc => {
       addToCart(acc, rentalDays, startDate, endDate, 1);
     });
 
     setIsModalOpen(false);
-    
-    // Explicitly wake up the CartDrawer ONLY after the choices modal bundle sheet finishes saving its data arrays!
     setIsOpen(true);
   };
 
