@@ -8,6 +8,7 @@ import ServicesPage from '@/pages/ServicesPage';
 import ServiceDetailPage from '@/pages/ServiceDetailPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import ShippingCalculator from './ShippingCalculator';
+import AccountPage from '@/pages/AccountPage';
 
 function Routes() {
   const route = useRouter();
@@ -22,6 +23,7 @@ function Routes() {
   if (matchRoute(route, 'services')) return <ServicesPage />;
   if (serviceDetail) return <ServiceDetailPage id={serviceDetail.id} />;
   if (matchRoute(route, 'checkout')) return <CheckoutPage />;
+  if (matchRoute(route, 'account')) return <AccountPage />;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-20 text-center">
