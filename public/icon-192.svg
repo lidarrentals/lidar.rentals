@@ -1,0 +1,63 @@
+<svg xmlns="http://w3.org" viewBox="0 0 720 720" width="100%" height="100%" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0f223a"/>
+      <stop offset="100%" stop-color="#07111e"/>
+    </radialGradient>
+    <filter id="laserGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="720" height="720" rx="140" fill="url(#bgGrad)"/>
+
+  <g transform="translate(36, 40) scale(0.9)">
+    <polygon points="320,130 400,130 460,200 420,320 300,320 260,200" fill="#4faee3" stroke="#0b3152" stroke-width="4"/>
+    <polygon points="320,130 400,130 435,210 360,260 285,210" fill="#86d4ff"/>
+    <circle cx="360" cy="290" r="16" fill="#ffffff" opacity="0.9" filter="url(#laserGlow)"/>
+
+    <polygon points="280,160 160,90 130,110 270,190" fill="#0f526d" stroke="#072330" stroke-width="3"/>
+    <rect x="120" y="70" width="36" height="45" rx="6" fill="#1b82a3" stroke="#072330" stroke-width="3"/>
+    <ellipse cx="138" cy="70" rx="70" ry="12" fill="#2c2c2c" stroke="#111" stroke-width="2"/>
+    <circle cx="138" cy="70" r="6" fill="#1b82a3"/>
+
+    <polygon points="440,160 560,90 590,110 450,190" fill="#0f526d" stroke="#072330" stroke-width="3"/>
+    <rect x="564" y="70" width="36" height="45" rx="6" fill="#1b82a3" stroke="#072330" stroke-width="3"/>
+    <ellipse cx="582" cy="70" rx="70" ry="12" fill="#2c2c2c" stroke="#111" stroke-width="2"/>
+    <circle cx="582" cy="70" r="6" fill="#1b82a3"/>
+
+    <polygon points="270,280 140,360 110,340 260,250" fill="#0f526d" stroke="#072330" stroke-width="3"/>
+    <rect x="106" y="340" width="36" height="45" rx="6" fill="#1b82a3" stroke="#072330" stroke-width="3"/>
+    <ellipse cx="124" cy="340" rx="70" ry="12" fill="#2c2c2c" stroke="#111" stroke-width="2"/>
+    <circle cx="124" cy="340" r="6" fill="#1b82a3"/>
+
+    <polygon points="450,280 580,360 610,340 460,250" fill="#0f526d" stroke="#072330" stroke-width="3"/>
+    <rect x="578" y="340" width="36" height="45" rx="6" fill="#1b82a3" stroke="#072330" stroke-width="3"/>
+    <ellipse cx="596" cy="340" rx="70" ry="12" fill="#2c2c2c" stroke="#111" stroke-width="2"/>
+    <circle cx="596" cy="340" r="6" fill="#1b82a3"/>
+
+    <path d="M 290,320 L 260,400 L 260,430" fill="none" stroke="#badef2" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 430,320 L 460,400 L 460,430" fill="none" stroke="#badef2" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <path d="M 120,530 A 280,280 0 0,0 600,530" fill="none" stroke="#00f3ff" stroke-width="16" stroke-linecap="round" filter="url(#laserGlow)"/>
+    
+    <g stroke="#00f3ff" stroke-width="5" opacity="0.85" stroke-dasharray="2,12" filter="url(#laserGlow)">
+      <line x1="360" y1="360" x2="160" y2="515" stroke-width="6"/>
+      <line x1="360" y1="360" x2="230" y2="538" stroke-width="5"/>
+      <line x1="360" y1="360" x2="300" y2="550" stroke-width="4"/>
+      <line x1="360" y1="360" x2="360" y2="555" stroke-width="6"/>
+      <line x1="360" y1="360" x2="420" y2="550" stroke-width="4"/>
+      <line x1="360" y1="360" x2="490" y2="538" stroke-width="5"/>
+      <line x1="360" y1="360" x2="560" y2="515" stroke-width="6"/>
+    </g>
+
+    <circle cx="120" cy="530" r="8" fill="#00f3ff" filter="url(#laserGlow)"/>
+    <circle cx="600" cy="530" r="8" fill="#00f3ff" filter="url(#laserGlow)"/>
+    <circle cx="210" cy="460" r="5" fill="#00f3ff" opacity="0.7"/>
+    <circle cx="510" cy="460" r="5" fill="#00f3ff" opacity="0.7"/>
+  </g>
+</svg>
