@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Force browser tab icon cache to break and reload your new drone logo -->
     <link rel="icon" type="image/svg+xml" href="/icon-192.svg?v=20261007" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0f172a" />
@@ -11,7 +10,6 @@
     <meta name="apple-mobile-web-app-title" content="lidar.rentals" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="description" content="LiDAR equipment rentals and professional onsite drone scanning services with real-time availability." />
-    <!-- Force mobile home screen download icons to clear out the old design -->
     <link rel="manifest" href="/manifest.json?v=20261007" />
     <link rel="apple-touch-icon" href="/icon-192.svg?v=20261007" />
     <link rel="mask-icon" href="/icon-192.svg?v=20261007" color="#2563eb" />
@@ -29,36 +27,27 @@
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function(registrations) {
           for (let registration of registrations) {
-            registration.unregister().then(function() {
-              window.location.reload(true);
-            });
+            registration.unregister();
           }
         });
       }
-      if (window.caches) {
-        caches.keys().then(function(names) {
-          for (let name of names) caches.delete(name);
-        });
-      }
-      window.localStorage.clear();
-      window.sessionStorage.clear();
     </script>
 
     <div id="root"></div>
-    
-    <!-- Force main application script module cache to drop -->
     <script type="module" src="/src/main.tsx?v=20261007"></script>
 
     <!-- Start of Tawk.to Script -->
     <script type="text/javascript">
       var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
       (function(){
-        var s1=document.createElement("script"),s0=document.getElementsByTagName("script");
-        s1.async=true;
-        s1.src='https://tawk.to';
-        s1.charset='UTF-8';
-        s1.setAttribute('crossorigin','*');
-        s0.parentNode.insertBefore(s1,s0);
+        var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+        if (s0 && s0.parentNode) {
+          s1.async=true;
+          s1.src='https://tawk.to';
+          s1.charset='UTF-8';
+          s1.setAttribute('crossorigin','*');
+          s0.parentNode.insertBefore(s1,s0);
+        }
       })();
     </script>
     <!-- End of Tawk.to Script -->
