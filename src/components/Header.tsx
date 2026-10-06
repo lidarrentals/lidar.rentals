@@ -1,100 +1,73 @@
-import { ShoppingCart, ScanLine, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { navigate } from '@/lib/router';
+import { ShoppingCart, Menu, X, User } from 'lucide-react';
+import { formatCurrency } from '@/lib/pricing';
 
 export default function Header() {
-  const { itemCount, setCartOpen } = useCart();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const navLinks = [
-    { label: 'Home', path: '/' },
-    { label: 'Equipment Rental', path: '/equipment' },
-    { label: 'Onsite Scanning', path: '/services' },
-  ];
-
-  const handleNav = (path: string) => {
-    navigate(path);
-    setMobileOpen(false);
-  };
+  const { total, itemsCount, setIsOpen } = useCart();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex justify-between h-16 items-center">
           {/* Logo */}
-          <button
-            onClick={() => handleNav('/')}
-            className="flex items-center gap-2 group"
-          >
-            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-slate-800 to-slate-600 flex items-center justify-center text-white transition-transform group-hover:scale-105">
-              <ScanLine className="w-5 h-5" />
-            </div>
-            <span className="text-lg font-bold text-slate-900 tracking-tight">
-              lidar<span className="text-blue-600">.rentals</span>
-            </span>
-          </button>
+          <div className="flex-shrink-0 flex items-center">
+            <a href="#/" className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+              <span className="bg-blue-600 text-white px-2.5 py-1 rounded-lg text-lg">L</span>
+              lidar.rentals
+            </a>
+          </div>
 
-          {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <button
-                key={link.path}
-                onClick={() => handleNav(link.path)}
-                className="px-4 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                {link.label}
-              </button>
-            ))}
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex space-x-1">
+            <a href="#/equipment" className="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 transition-colors">Equipment</a>
+            <a href="#/services" className="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-50 transition-colors">Services</a>
           </nav>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setCartOpen(true)}
-              className="relative p-2 text-slate-700 hover:text-blue-600 transition-colors"
-              aria-label="Open cart"
+          {/* Desktop Right Side Action Group */}
+          <div className="hidden md:flex items-center gap-4">
+            {/* Added: Account Portal Navigation Button */}
+            <a 
+              href="#/account" 
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-blue-600 rounded-lg transition-colors hover:bg-slate-50"
             >
-              <ShoppingCart className="w-6 h-6" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs font-bold rounded-full flex items-center justify-center animate-in fade-in zoom-in">
-                  {itemCount}
-                </span>
-              )}
-            </button>
+              <User size={18} />
+              <span>My Account</span>
+            </a>
 
+            {/* Shopping Cart Drawer Trigger Button */}
             <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden p-2 text-slate-700"
-              aria-label="Toggle menu"
+              onClick={() => setIsOpen(true)}
+              className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all shadow-sm group"
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <ShoppingCart size={16} className="text-slate-400 group-hover:text-white transition-colors" />
+              <span>{itemsCount > 0 ? `${itemsCount} items` : 'Cart'}</span>
+              {total > 0 && <span className="border-l border-slate-700 pl-2 ml-1 text-slate-300 font-medium">{formatCurrency(total)}</span>}
+            </button>
+          </div>
+
+          {/* Mobile Menu Icon Toggle */}
+          <div className="flex md:hidden items-center gap-2">
+            <button onClick={() => setIsOpen(true)} className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg relative">
+              <ShoppingCart size={20} />
+              {itemsCount > 0 && <span className="absolute top-1 right-1 w-4 h-4 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{itemsCount}</span>}
+            </button>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-slate-600 hover:bg-slate-50 rounded-lg">
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
-
-        {/* Mobile nav */}
-        {mobileOpen && (
-          <nav className="md:hidden pb-4 flex flex-col gap-1">
-            {navLinks.map((link) => (
-              <button
-                key={link.path}
-                onClick={() => handleNav(link.path)}
-                className="px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              >
-                {link.label}
-              </button>
-            ))}
-            <button
-              onClick={() => handleNav('/services')}
-              className="px-4 py-2.5 text-left text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
-            >
-              <ScanLine className="w-4 h-4" />
-              Onsite Scanning
-            </button>
-          </nav>
-        )}
       </div>
+
+      {/* Mobile Sidebar Flyout Panel Links */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-1 shadow-inner animate-in fade-in slide-in-from-top-2 duration-200">
+          <a href="#/equipment" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50">Equipment</a>
+          <a href="#/services" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-xl text-base font-medium text-slate-700 hover:bg-slate-50">Services</a>
+          <a href="#/account" onClick={() => setMobileMenuOpen(false)} className="block px-3 py-2.5 rounded-xl text-base font-medium text-blue-600 bg-blue-50/50 font-semibold flex items-center gap-2"><User size={18} /> My Account Dashboard</a>
+        </div>
+      )}
     </header>
   );
 }
