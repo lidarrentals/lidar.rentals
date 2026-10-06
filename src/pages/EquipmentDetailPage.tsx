@@ -7,6 +7,7 @@ import type { Equipment, EquipmentBooking, RentalPeriod } from '@/types';
 import { RENTAL_PERIODS } from '@/types';
 import { getEquipmentPrice, formatCurrency, formatDate, formatDateISO, addDays } from '@/lib/pricing';
 import AvailabilityCalendar from '@/components/AvailabilityCalendar';
+import AccessoryModal from '@/components/AccessoryModal';
 
 export default function EquipmentDetailPage({ id }: { id: string }) {
   const [equipment, setEquipment] = useState<Equipment | null>(null);
@@ -19,6 +20,7 @@ export default function EquipmentDetailPage({ id }: { id: string }) {
   const [activeImage, setActiveImage] = useState(0);
   const [adding, setAdding] = useState(false);
   const { addItem } = useCart();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -72,25 +74,23 @@ export default function EquipmentDetailPage({ id }: { id: string }) {
   const periodInfo = RENTAL_PERIODS.find(p => p.value === selectedPeriod)!;
   const canAddToCart = startDate && endDate && quantity > 0;
 
-  const handleAddToCart = () => {
-    if (!canAddToCart) return;
-    setAdding(true);
-    const cartId = `${equipment.id}-${selectedPeriod}-${formatDateISO(startDate!)}-${quantity}`;
+    const handleAddToCartClick = () => {
+    // Open the selection matrix modal view immediately instead of adding silently
+    setIsModalOpen(true);
+  };
 
-    addItem({
-      id: cartId,
-      itemType: 'equipment',
-      itemId: equipment.id,
-      name: equipment.name,
-      imageUrl: equipment.image_url,
-      rentalPeriod: selectedPeriod,
-      periodLabel: periodInfo.label,
-      startDate: formatDateISO(startDate!),
-      endDate: formatDateISO(endDate!),
-      quantity,
-      unitPrice: price,
-      lineTotal: price * quantity,
+  const handleFinishBundleAddToCart = (selectedAccessories: any[]) => {
+    // 1. Add your core primary machine item choice first
+    addToCart(equipment, rentalDays, startDate, endDate, quantity);
+
+    // 2. Loop through and append every checked accessory choice right behind it using the same rental timeline windows
+    selectedAccessories.forEach(acc => {
+      addToCart(acc, rentalDays, startDate, endDate, 1);
     });
+
+    setIsModalOpen(false);
+    setIsOpen(true); // Automatically opens your slide-out checkout CartDrawer right away!
+  };
 
     // Create a booking record to mark dates as unavailable
     supabase.from('equipment_bookings').insert({
@@ -278,6 +278,12 @@ export default function EquipmentDetailPage({ id }: { id: string }) {
           onSelectEnd={setEndDate}
           minDays={periodInfo.days}
         />
+        <AccessoryModal 
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  primaryItem={equipment}
+  onConfirm={handleFinishBundleAddToCart}
+/>
       </div>
     </div>
   );
