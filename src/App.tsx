@@ -9,6 +9,7 @@ import ServiceDetailPage from '@/pages/ServiceDetailPage';
 import CheckoutPage from '@/pages/CheckoutPage';
 import ShippingCalculator from './ShippingCalculator';
 import AccountPage from '@/pages/AccountPage';
+import AccountPage from '@/pages/AccountPage.tsx';
 
 function Routes() {
   const route = useRouter();
