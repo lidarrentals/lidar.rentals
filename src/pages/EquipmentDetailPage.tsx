@@ -1,85 +1,70 @@
-import { useEffect, useState } from 'react';
-import { ChevronLeft, Check, ShoppingCart, AlertCircle } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
+import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
-import { navigate } from '@/lib/router';
-import type { Equipment, EquipmentBooking, RentalPeriod } from '@/types';
-import { RENTAL_PERIODS } from '@/types';
-import { getEquipmentPrice, formatCurrency, formatDate, formatDateISO, addDays } from '@/lib/pricing';
-import AvailabilityCalendar from '@/components/AvailabilityCalendar';
+import { supabase } from '@/lib/supabase';
+import { Calendar, Shield, ShoppingCart, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
+import { formatCurrency } from '@/lib/pricing';
+import { navigate, getRouteParams } from '@/lib/router';
+import type { Equipment } from '@/types';
 import AccessoryModal from '@/components/AccessoryModal';
 
-export default function EquipmentDetailPage({ id }: { id: string }) {
+export default function EquipmentDetailPage() {
+  const params = getRouteParams();
+  const { addToCart, setIsOpen } = useCart();
+  
   const [equipment, setEquipment] = useState<Equipment | null>(null);
-  const [bookings, setBookings] = useState<EquipmentBooking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState<RentalPeriod>('1day');
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [activeImage, setActiveImage] = useState(0);
-  const [adding, setAdding] = useState(false);
-  const { addItem } = useCart();
+  const [rentalDays, setRentalDays] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  // Dynamic modular pop-up visibility gate trackers
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const [eqRes, bookRes] = await Promise.all([
-        supabase.from('equipment').select('*').eq('id', id).maybeSingle(),
-        supabase.from('equipment_bookings').select('*').eq('equipment_id', id).neq('status', 'cancelled'),
-      ]);
-      setEquipment(eqRes.data);
-      setBookings(bookRes.data || []);
-      setLoading(false);
-    })();
-  }, [id]);
+    if (params?.id) {
+      fetchProductDetails(params.id);
+    }
+    // Listen for public session auth context tokens instantly
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session);
+    });
+  }, [params?.id]);
 
-  if (loading) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="animate-pulse">
-          <div className="h-6 bg-slate-200 rounded w-32 mb-6" />
-          <div className="grid lg:grid-cols-2 gap-8">
-            <div className="aspect-[4/3] bg-slate-200 rounded-2xl" />
-            <div className="space-y-4">
-              <div className="h-8 bg-slate-200 rounded w-3/4" />
-              <div className="h-4 bg-slate-200 rounded w-full" />
-              <div className="h-4 bg-slate-200 rounded w-2/3" />
-              <div className="h-32 bg-slate-200 rounded-xl" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      setRentalDays(diffDays);
+    }
+  }, [startDate, endDate]);
 
-  if (!equipment) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
-        <AlertCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-slate-900">Equipment not found</h2>
-        <button
-          onClick={() => navigate('/equipment')}
-          className="mt-4 text-blue-600 font-medium hover:underline"
-        >
-          Back to catalog
-        </button>
-      </div>
-    );
-  }
+  const fetchProductDetails = async (id: string) => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('equipment')
+      .select('*')
+      .eq('id', id)
+      .single();
+    setEquipment(data);
+    setLoading(false);
+  };
 
-  const gallery = [equipment.image_url, ...(equipment.gallery || [])].filter(Boolean);
-  const price = getEquipmentPrice(equipment, selectedPeriod);
-  const periodInfo = RENTAL_PERIODS.find(p => p.value === selectedPeriod)!;
-  const canAddToCart = startDate && endDate && quantity > 0;
-
-    const handleAddToCartClick = () => {
-    // Open the selection matrix modal view immediately instead of adding silently
+  const handleAddToCartClick = () => {
+    if (!startDate || !endDate) {
+      alert('Please select your preferred rental timeline windows first.');
+      return;
+    }
+    // Intercept the silently adding process and wake up your new companion accessory bundle matrix!
     setIsModalOpen(true);
   };
 
-  const handleFinishBundleAddToCart = (selectedAccessories: any[]) => {
+  const handleFinishBundleAddToCart = (selectedAccessories: Equipment[]) => {
+    if (!equipment) return;
+
     // 1. Add your core primary machine item choice first
     addToCart(equipment, rentalDays, startDate, endDate, quantity);
 
@@ -92,199 +77,116 @@ export default function EquipmentDetailPage({ id }: { id: string }) {
     setIsOpen(true); // Automatically opens your slide-out checkout CartDrawer right away!
   };
 
-    // Create a booking record to mark dates as unavailable
-    supabase.from('equipment_bookings').insert({
-      equipment_id: equipment.id,
-      start_date: formatDateISO(startDate!),
-      end_date: formatDateISO(endDate!),
-      quantity,
-      status: 'confirmed',
-    }).then(() => {
-      setBookings(prev => [...prev, {
-        id: cartId,
-        equipment_id: equipment.id,
-        start_date: formatDateISO(startDate!),
-        end_date: formatDateISO(endDate!),
-        quantity,
-        status: 'confirmed',
-        created_at: new Date().toISOString(),
-      }]);
-      setAdding(false);
-      setStartDate(null);
-      setEndDate(null);
-    });
-  };
+  if (loading) {
+    return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" /></div>;
+  }
 
+  if (!equipment) {
+    return (
+      <div className="max-w-md mx-auto my-20 text-center">
+        <h3 className="text-lg font-bold text-slate-900">Equipment item record not found</h3>
+        <button onClick={() => navigate('/equipment')} className="mt-4 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold">Return to Catalog</button>
+      </div>
+    );
+  }
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Breadcrumb */}
-      <button
-        onClick={() => navigate('/equipment')}
-        className="flex items-center gap-1 text-sm text-slate-500 hover:text-blue-600 transition-colors mb-6"
-      >
-        <ChevronLeft className="w-4 h-4" />
-        Back to catalog
+      <button onClick={() => navigate('/equipment')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 mb-6 transition-colors group">
+        <ArrowLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
+        <span>Back to Equipment Catalog</span>
       </button>
 
-      <div className="grid lg:grid-cols-2 gap-8 lg:gap-12">
-        {/* Image gallery */}
-        <div>
-          <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-slate-200">
-            <img
-              src={gallery[activeImage] || gallery[0]}
-              alt={equipment.name}
-              className="w-full h-full object-cover"
-            />
-          </div>
-          {gallery.length > 1 && (
-            <div className="flex gap-3 mt-4 overflow-x-auto">
-              {gallery.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setActiveImage(idx)}
-                  className={`w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all ${
-                    activeImage === idx ? 'border-blue-600 ring-2 ring-blue-200' : 'border-slate-200'
-                  }`}
-                >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Details */}
-        <div>
-          <div className="flex items-center gap-3 mb-3">
-            <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-semibold rounded-full">
-              {equipment.quantity} in stock
-            </span>
-            {equipment.featured && (
-              <span className="px-2.5 py-1 bg-slate-100 text-slate-700 text-xs font-semibold rounded-full">
-                Featured
-              </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
+        {/* Left Side: Product Showcase Gallery Images Container View */}
+        <div className="space-y-4">
+          <div className="aspect-[4/3] bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
+            {equipment.image_url ? (
+              <img src={equipment.image_url} alt={equipment.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-slate-300 text-6xl">📦</div>
             )}
           </div>
-
-          <h1 className="text-3xl font-bold text-slate-900">{equipment.name}</h1>
-          <p className="mt-4 text-slate-600 leading-relaxed">{equipment.description}</p>
-
-          {/* Rental period selection */}
-          <div className="mt-8">
-            <h3 className="text-sm font-bold text-slate-900 mb-3">Select Rental Period</h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {RENTAL_PERIODS.map((period) => (
-                <button
-                  key={period.value}
-                  onClick={() => setSelectedPeriod(period.value)}
-                  className={`
-                    p-3 rounded-xl border-2 text-center transition-all
-                    ${selectedPeriod === period.value
-                      ? 'border-blue-600 bg-blue-50'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
-                    }
-                  `}
-                >
-                  <div className={`text-sm font-semibold ${selectedPeriod === period.value ? 'text-blue-700' : 'text-slate-900'}`}>
-                    {period.label}
-                  </div>
-                  <div className={`text-xs mt-0.5 ${selectedPeriod === period.value ? 'text-blue-600' : 'text-slate-500'}`}>
-                    {formatCurrency(getEquipmentPrice(equipment, period.value))}
-                  </div>
-                </button>
-              ))}
-            </div>
+          <div className="prose prose-sm max-w-none text-slate-600 leading-relaxed pt-2">
+            <h3 className="text-slate-900 font-bold text-sm uppercase tracking-wider mb-2">Technical Specifications</h3>
+            <p>{equipment.description}</p>
           </div>
+        </div>
 
-          {/* Quantity */}
-          <div className="mt-6">
-            <h3 className="text-sm font-bold text-slate-900 mb-3">Quantity</h3>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="w-10 h-10 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-lg"
-              >
-                −
-              </button>
-              <span className="text-lg font-bold text-slate-900 w-12 text-center">{quantity}</span>
-              <button
-                onClick={() => setQuantity(Math.min(equipment.quantity, quantity + 1))}
-                className="w-10 h-10 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-bold text-lg"
-              >
-                +
-              </button>
-              <span className="text-sm text-slate-400 ml-2">Max {equipment.quantity} available</span>
-            </div>
-          </div>
+        {/* Right Side: Rental Pricing Operations Form Dashboard */}
+        <div className="flex flex-col justify-between h-full space-y-6">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 inline-block mb-3">Professional Asset</span>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 leading-tight">{equipment.name}</h1>
+            <p className="text-sm text-slate-400 font-mono mt-1">Serial SKU ID: {equipment.id.slice(0, 8).toUpperCase()}</p>
 
-          {/* Summary + add to cart */}
-          <div className="mt-8 p-5 bg-slate-50 rounded-2xl border border-slate-200">
-            <div className="flex items-center justify-between mb-4">
+            <div className="my-6 p-4 bg-slate-50 rounded-2xl border border-slate-200/60 flex items-center justify-between">
               <div>
-                <span className="text-sm text-slate-500">Total for {periodInfo.label}</span>
-                <div className="text-2xl font-bold text-slate-900">
-                  {formatCurrency(price * quantity)}
+                <span className="text-xs text-slate-400 block font-medium">Daily Standard Lease Rate</span>
+                {isLoggedIn ? (
+                  <span className="text-2xl font-black text-slate-900 mt-0.5">{formatCurrency(equipment.price_1day)} <span className="text-xs text-slate-500 font-normal">/ day</span></span>
+                ) : (
+                  <span className="text-base font-bold text-blue-600 block mt-1">Gated: Authorized Accounts Only</span>
+                )}
+              </div>
+              <div className="text-right">
+                <span className="text-xs text-slate-400 block font-medium">Availability Pool</span>
+                <span className="text-sm font-bold text-slate-800 bg-white px-2.5 py-1 border rounded-lg inline-block mt-1 shadow-sm">{equipment.quantity} units ready</span>
+              </div>
+            </div>
+
+            {/* Selection Inputs Form Box elements */}
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1"><Calendar size={12} /> Lease Start</label>
+                  <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm bg-white" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-600 mb-1 flex items-center gap-1"><Calendar size={12} /> Lease Return</label>
+                  <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full p-2.5 border rounded-xl text-sm bg-white" />
                 </div>
               </div>
-              {startDate && endDate && (
-                <div className="text-right text-sm text-slate-600">
-                  <div>{formatDate(startDate)}</div>
-                  <div className="text-slate-400">to</div>
-                  <div>{formatDate(endDate)}</div>
-                </div>
-              )}
-            </div>
 
-            <button
-              onClick={handleAddToCart}
-              disabled={!canAddToCart || adding}
-              className={`
-                w-full py-3.5 rounded-xl font-semibold transition-all flex items-center justify-center gap-2
-                ${canAddToCart && !adding
-                  ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-md'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }
-              `}
-            >
-              {adding ? (
-                <>
-                  <Check className="w-5 h-5" />
-                  Added to Cart!
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="w-5 h-5" />
-                  {canAddToCart ? 'Add to Cart' : 'Select dates to book'}
-                </>
-              )}
-            </button>
-            {!canAddToCart && (
-              <p className="text-xs text-slate-400 text-center mt-2">
-                Pick your start and end dates on the calendar below
-              </p>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Lease Quantity (Units)</label>
+                <select value={quantity} onChange={e => setQuantity(Number(e.target.value))} className="w-full p-2.5 border rounded-xl text-sm bg-white cursor-pointer font-semibold">
+                  {[...Array(equipment.quantity || 1)].map((_, i) => (
+                    <option key={i+1} value={i+1}>{i+1} Unit{i > 0 ? 's' : ''}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-100 space-y-3">
+            {startDate && endDate && (
+              <div className="flex justify-between items-center text-sm p-3 bg-slate-50 border rounded-xl">
+                <span className="text-slate-500 font-medium">Timeline Duration Summary:</span>
+                <span className="font-bold text-slate-800">{rentalDays} rental operation days</span>
+              </div>
+            )}
+
+            {isLoggedIn ? (
+              <button onClick={handleAddToCartClick} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer text-sm">
+                <ShoppingCart size={16} className="group-hover:scale-105 transition-transform" />
+                <span>Reserve Equipment & Select Add-ons</span>
+              </button>
+            ) : (
+              <button onClick={() => navigate('/account')} className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 text-sm cursor-pointer">
+                <span>Secure Sign-In Required to Process Lease Requests</span>
+              </button>
             )}
           </div>
         </div>
       </div>
 
-      {/* Availability calendar */}
-      <div className="mt-10">
-        <AvailabilityCalendar
-          bookings={bookings}
-          totalQuantity={equipment.quantity}
-          selectedStartDate={startDate}
-          selectedEndDate={endDate}
-          onSelectStart={setStartDate}
-          onSelectEnd={setEndDate}
-          minDays={periodInfo.days}
-        />
-        <AccessoryModal 
-  isOpen={isModalOpen}
-  onClose={() => setIsModalOpen(false)}
-  primaryItem={equipment}
-  onConfirm={handleFinishBundleAddToCart}
-/>
-      </div>
+      {/* Render the modular accessory options bundle sheet tag overlay safely before closing the tree template canvas */}
+      <AccessoryModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        primaryItem={equipment}
+        onConfirm={handleFinishBundleAddToCart}
+      />
     </div>
   );
 }
