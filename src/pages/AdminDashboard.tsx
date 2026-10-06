@@ -45,7 +45,7 @@ export default function AdminDashboard() {
 
   const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: string) => {
     if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
+    const file = e.target.files;
 
     if (file.type !== 'application/pdf') {
       alert('File block: You can only upload invoices in .pdf format!');
@@ -102,7 +102,8 @@ export default function AdminDashboard() {
       if (error) throw error;
 
       if (orderData) {
-        fetch('/.netlify/functions/send-order-email', {
+        // This is perfectly configured with the new underscore file path name mapping link!
+        fetch('/.netlify/functions/send_order_email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
