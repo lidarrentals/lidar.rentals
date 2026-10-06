@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ShoppingCart, User, Menu, X, Shield } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { navigate } from '@/lib/router';
 
 export default function Header() {
-  const currentRoute = typeof window !== 'undefined' ? window.location.hash : '';
+  const [currentRoute, setCurrentRoute] = useState(typeof window !== 'undefined' ? window.location.hash : '');
   const { cart, setIsOpen } = useCart();
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    // Sync current hash route changes seamlessly
+    const handleHashChange = () => setCurrentRoute(window.location.hash);
+    window.addEventListener('hashchange', handleHashChange);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
@@ -19,10 +22,19 @@ export default function Header() {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.removeEventListener('hashchange', handleHashChange);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Native navigation fallback handler bypassing custom router framework dependencies completely
+  const handleNav = (path: string) => {
+    window.location.hash = path;
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
@@ -31,8 +43,8 @@ export default function Header() {
           
           {/* Brand Logo Navigation Anchor Section */}
           <button 
-            onClick={() => navigate('/')} 
-            className="flex items-center gap-3 group text-left cursor-pointer"
+            onClick={() => handleNav('/')} 
+            className="flex items-center gap-3 group text-left cursor-pointer bg-transparent border-0"
           >
             <img 
               src="/icon-192.svg" 
@@ -47,16 +59,16 @@ export default function Header() {
           {/* Desktop Navigation Link Arrays */}
           <nav className="hidden md:flex items-center gap-8">
             <button 
-              onClick={() => navigate('/equipment')} 
-              className={`text-sm font-semibold transition-colors cursor-pointer ${
+              onClick={() => handleNav('/equipment')} 
+              className={`text-sm font-semibold transition-colors cursor-pointer bg-transparent border-0 ${
                 currentRoute.includes('equipment') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Equipment
             </button>
             <button 
-              onClick={() => navigate('/services')} 
-              className={`text-sm font-semibold transition-colors cursor-pointer ${
+              onClick={() => handleNav('/services')} 
+              className={`text-sm font-semibold transition-colors cursor-pointer bg-transparent border-0 ${
                 currentRoute.includes('services') ? 'text-blue-600' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -66,11 +78,11 @@ export default function Header() {
 
           {/* User Controls Panel Actions */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Safe optional chaining check added here to prevent blank page crashes */}
+            {/* Safe admin gate verification */}
             {user && user.email === 'your-admin-email@domain.com' && (
               <button 
-                onClick={() => navigate('/admin')} 
-                className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all flex items-center gap-1.5 text-xs font-bold border border-slate-200"
+                onClick={() => handleNav('/admin')} 
+                className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all flex items-center gap-1.5 text-xs font-bold border border-slate-200 cursor-pointer bg-white"
               >
                 <Shield size={16} className="text-blue-600" />
                 <span>Admin Panel</span>
@@ -79,7 +91,7 @@ export default function Header() {
 
             <button 
               onClick={() => setIsOpen(true)} 
-              className="relative p-2.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all cursor-pointer group"
+              className="relative p-2.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all cursor-pointer group bg-transparent border-0"
             >
               <ShoppingCart size={21} className="group-hover:scale-105 transition-transform" />
               {totalItems > 0 && (
@@ -90,7 +102,7 @@ export default function Header() {
             </button>
 
             <button 
-              onClick={() => navigate('/account')} 
+              onClick={() => handleNav('/account')} 
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all cursor-pointer ${
                 currentRoute.includes('account')
                   ? 'bg-blue-50 border-blue-200 text-blue-600'
@@ -106,7 +118,7 @@ export default function Header() {
           <div className="flex md:hidden items-center gap-3">
             <button 
               onClick={() => setIsOpen(true)} 
-              className="relative p-2 text-slate-600"
+              className="relative p-2 text-slate-600 bg-transparent border-0"
             >
               <ShoppingCart size={22} />
               {totalItems > 0 && (
@@ -117,7 +129,7 @@ export default function Header() {
             </button>
             <button 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-              className="p-2 text-slate-600"
+              className="p-2 text-slate-600 bg-transparent border-0"
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -126,25 +138,25 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Responsive Slide Out Mobile Context Panel Drawer Grid Overlay */}
+      {/* Mobile Menu Overlay panel */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-inner animate-in slide-in-from-top-4 duration-200">
+        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-inner">
           <button 
-            onClick={() => { setMobileMenuOpen(false); navigate('/equipment'); }} 
-            className="block w-full text-left py-2 text-base font-bold text-slate-700 hover:text-blue-600"
+            onClick={() => handleNav('/equipment')} 
+            className="block w-full text-left py-2 text-base font-bold text-slate-700 hover:text-blue-600 bg-transparent border-0"
           >
             Equipment Catalog
           </button>
           <button 
-            onClick={() => { setMobileMenuOpen(false); navigate('/services'); }} 
-            className="block w-full text-left py-2 text-base font-bold text-slate-700 hover:text-blue-600"
+            onClick={() => handleNav('/services')} 
+            className="block w-full text-left py-2 text-base font-bold text-slate-700 hover:text-blue-600 bg-transparent border-0"
           >
             Drone Services
           </button>
           <hr className="border-slate-100" />
           <button 
-            onClick={() => { setMobileMenuOpen(false); navigate('/account'); }} 
-            className="block w-full text-center py-2.5 bg-blue-600 text-white font-bold rounded-xl text-sm"
+            onClick={() => handleNav('/account')} 
+            className="block w-full text-center py-2.5 bg-blue-600 text-white font-bold rounded-xl text-sm border-0"
           >
             {user ? 'Go to Dashboard' : 'Sign Into Portal'}
           </button>
