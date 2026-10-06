@@ -5,7 +5,6 @@ import { useCart } from '@/context/CartContext';
 import { navigate } from '@/lib/router';
 
 export default function Header() {
-  // Uses a direct browser location link lookup to bypass custom utility errors safely
   const currentRoute = typeof window !== 'undefined' ? window.location.hash : '';
   const { cart, setIsOpen } = useCart();
   const [user, setUser] = useState<any>(null);
@@ -35,7 +34,6 @@ export default function Header() {
             onClick={() => navigate('/')} 
             className="flex items-center gap-3 group text-left cursor-pointer"
           >
-            {/* Loads your fresh custom vector neon drone scanning icon instead of the generic blue box! */}
             <img 
               src="/icon-192.svg" 
               alt="lidar.rentals logo" 
@@ -68,8 +66,8 @@ export default function Header() {
 
           {/* User Controls Panel Actions */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Replace with your exact email to safely render your operational panel link */}
-            {user?.email === 'your-admin-email@domain.com' && (
+            {/* Safe optional chaining check added here to prevent blank page crashes */}
+            {user && user.email === 'your-admin-email@domain.com' && (
               <button 
                 onClick={() => navigate('/admin')} 
                 className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-100 transition-all flex items-center gap-1.5 text-xs font-bold border border-slate-200"
