@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { FileText, Upload, CheckCircle, Loader2, Lock } from 'lucide-react';
+import { FileText, Upload, CheckCircle, Loader2, Lock, Truck } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
 
 export default function AccountPage() {
@@ -123,26 +123,49 @@ export default function AccountPage() {
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => (
-                  <div key={order.id} className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                      <span className="text-xs font-mono font-bold uppercase text-slate-400">Order ID: {order.id.slice(0,8)}</span>
-                      <div className="text-lg font-bold text-slate-900 mt-1">{formatCurrency(order.total)}</div>
-                      <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold ${order.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{order.status}</span>
+                  <div key={order.id} className="bg-white border border-slate-200 p-6 rounded-2xl flex flex-col justify-between gap-4">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                      <div>
+                        <span className="text-xs font-mono font-bold uppercase text-slate-400">Order ID: {order.id.slice(0,8)}</span>
+                        <div className="text-lg font-bold text-slate-900 mt-1">{formatCurrency(order.total)}</div>
+                        <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold ${order.status === 'confirmed' || order.status === 'shipped' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{order.status}</span>
+                      </div>
+
+                      <div className="w-full md:w-auto bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
+                        {order.coi_url ? (
+                          <span className="flex items-center gap-2 text-sm text-green-700 font-semibold"><CheckCircle size={16} /> Certificate Uploaded (.PDF)</span>
+                        ) : (
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-600 block">Requires Certificate of Insurance (COI) *</label>
+                            <label className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 border-blue-200 cursor-pointer shadow-sm hover:bg-blue-50/50">
+                              <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload PDF'}
+                              <input type="file" accept=".pdf" onChange={(e) => handleCoiUpload(e, order.id)} className="hidden" disabled={uploading} />
+                            </label>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="w-full md:w-auto bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-2">
-                      {order.coi_url ? (
-                        <a href={order.coi_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-green-700 font-semibold hover:underline"><CheckCircle size={16} /> View Certificate (.PDF)</a>
-                      ) : (
-                        <div className="flex flex-col gap-1.5">
-                          <label className="text-xs font-bold text-slate-600 block">Requires Certificate of Insurance (COI) *</label>
-                          <label className="flex items-center gap-2 bg-white border px-3 py-1.5 rounded-lg text-xs font-semibold text-blue-600 border-blue-200 cursor-pointer shadow-sm hover:bg-blue-50/50">
-                            <Upload size={14} /> {uploading ? 'Uploading...' : 'Upload PDF'}
-                            <input type="file" accept=".pdf" onChange={(e) => handleCoiUpload(e, order.id)} className="hidden" disabled={uploading} />
-                          </label>
-                        </div>
-                      )}
-                    </div>
+                    {/* Automatically injected shipment tracking and digital invoice dashboard sections */}
+                    {(order.invoice_url || order.tracking_number) && (
+                      <div className="mt-2 pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                        {order.invoice_url && (
+                          <a href={order.invoice_url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-100 p-3 rounded-xl hover:bg-blue-100 transition-all">
+                            <FileText size={14} /> View Digital Rental Invoice (.PDF)
+                          </a>
+                        )}
+                        {order.tracking_number && (
+                          <div className="flex items-center gap-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                            <Truck size={14} className="text-slate-500" />
+                            <div>
+                              <span className="block font-bold text-slate-400 uppercase tracking-wider text-[9px]">{order.tracking_carrier || 'UPS'} Delivery Status</span>
+                              <span className="font-mono font-bold text-slate-900">{order.tracking_number}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
                   </div>
                 ))}
               </div>
