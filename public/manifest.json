@@ -1,49 +1,18 @@
 {
-  "name": "lidar.rentals — LiDAR Equipment & Scanning",
   "short_name": "lidar.rentals",
+  "name": "lidar.rentals — LiDAR Equipment & Scanning Services",
   "description": "LiDAR equipment rentals and professional onsite drone scanning services with real-time availability.",
   "start_url": "/",
+  "background_color": "#07111e",
+  "theme_color": "#0f172a",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0f172a",
-  "theme_color": "#2563eb",
-  "categories": ["business", "productivity", "shopping"],
   "icons": [
     {
-      "src": "/icon-192.svg",
-      "sizes": "192x192",
+      "src": "/icon-192.svg?v=20261007",
       "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [],
-  "shortcuts": [
-    {
-      "name": "Browse Equipment",
-      "url": "/#/equipment",
-      "description": "Rent equipment by the day, week, or month"
-    },
-    {
-      "name": "Onsite Scanning",
-      "url": "/#/services",
-      "description": "Book professional 3D scanning services"
-    },
-    {
-      "name": "Checkout",
-      "url": "/#/checkout",
-      "description": "Complete your rental order"
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
     }
   ]
 }
