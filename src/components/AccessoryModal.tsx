@@ -18,20 +18,29 @@ export default function AccessoryModal({ isOpen, onClose, primaryItem, onConfirm
 
   useEffect(() => {
     if (isOpen && primaryItem) {
-      fetchLinkedAccessories(primaryItem.id);
-      setSelectedIds([]); // Reset selections on fresh open
+      // Direct variable assignment check capturing both camelCase and database underscore layouts safely
+      const coreId = primaryItem.id || (primaryItem as any).ID;
+      if (coreId) {
+        fetchLinkedAccessories(coreId);
+      }
+      setSelectedIds([]); 
     }
   }, [isOpen, primaryItem]);
 
-  const fetchLinkedAccessories = async (parentId: string) => {
+  const fetchLinkedAccessories = async (targetParentId: string) => {
     setLoading(true);
-    // Query items flagged as accessories that match the parent primary unit ID
-    const { data } = await supabase
+    
+    // Query items flagged as accessories that match the parent primary unit ID using both common SQL string properties fields rows
+    const { data, error } = await supabase
       .from('equipment')
       .select('*')
       .eq('is_accessory', true)
-      .eq('parent_id', parentId)
+      .or(`parent_id.eq.${targetParentId},parentId.eq.${targetParentId}`)
       .eq('is_active', true);
+    
+    if (error) {
+      console.error("Database connection array link trace mismatch:", error);
+    }
     
     setAccessories(data || []);
     setLoading(false);
@@ -44,20 +53,20 @@ export default function AccessoryModal({ isOpen, onClose, primaryItem, onConfirm
   };
 
   const handleProceed = () => {
-    const chosenItems = accessories.filter(acc => selectedIds.includes(acc.id));
+    const chosenItems = accessories.filter(acc => selectedIds.includes(acc.id || (acc as any).ID));
     onConfirm(chosenItems);
   };
 
   if (!isOpen || !primaryItem) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
       <div className="bg-white rounded-3xl border border-slate-200 w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header Layout */}
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
           <div>
             <h3 className="text-lg font-bold text-slate-900">Configure Your Rental Bundle</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Enhance your {primaryItem.name} setup with matching accessories.</p>
+            <p className="text-xs text-slate-500 mt-0.5">Enhance your setup with matching professional accessories.</p>
           </div>
           <button onClick={onClose} className="p-1.5 hover:bg-slate-200 text-slate-400 hover:text-slate-600 rounded-xl transition-colors">
             <X size={18} />
@@ -74,11 +83,12 @@ export default function AccessoryModal({ isOpen, onClose, primaryItem, onConfirm
             </div>
           ) : (
             accessories.map((acc) => {
-              const isChecked = selectedIds.includes(acc.id);
+              const currentId = acc.id || (acc as any).ID;
+              const isChecked = selectedIds.includes(currentId);
               return (
                 <div 
-                  key={acc.id} 
-                  onClick={() => toggleAccessory(acc.id)}
+                  key={currentId} 
+                  onClick={() => toggleAccessory(currentId)}
                   className={`p-4 border rounded-2xl flex justify-between items-center gap-4 cursor-pointer transition-all duration-200 select-none ${
                     isChecked ? 'border-blue-600 bg-blue-50/40 shadow-sm' : 'border-slate-200 bg-white hover:border-slate-300'
                   }`}
