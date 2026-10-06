@@ -11,13 +11,20 @@ export default function EquipmentCatalogPage() {
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortBy, setSortBy] = useState<string>('name');
+  
+  // Track if a secure customer profile account session is currently logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     (async () => {
-     const [eqRes] = await Promise.all([
+      // 1. Check current authenticated registration profile states instantly
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsLoggedIn(!!session);
+
+      const [eqRes] = await Promise.all([
         supabase.from('equipment').select('*').eq('is_active', true).order('created_at', { ascending: false }),
       ]);
-const catRes = { data: [], error: null };
+      const catRes = { data: [], error: null };
     
       setEquipment(eqRes.data || []);
       setCategories((catRes.data || []).filter(c => c.slug !== 'onsite-services'));
@@ -109,7 +116,7 @@ const catRes = { data: [], error: null };
         {loading ? 'Loading...' : `${filtered.length} item${filtered.length !== 1 ? 's' : ''} available`}
       </div>
 
-      {/* Grid */}
+      {/* Grid rendering section layout area */}
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
@@ -132,7 +139,10 @@ const catRes = { data: [], error: null };
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((eq) => (
-            <EquipmentCard key={eq.id} equipment={eq} />
+            <div key={eq.id} className={!isLoggedIn ? "hide-pricing-card-wrapper" : ""}>
+              {/* Pass the session boolean state variable directly down into your equipment cards */}
+              <EquipmentCard equipment={eq} isLoggedIn={isLoggedIn} />
+            </div>
           ))}
         </div>
       )}
