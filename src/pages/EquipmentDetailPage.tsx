@@ -9,7 +9,7 @@ import AccessoryModal from '@/components/AccessoryModal';
 
 export default function EquipmentDetailPage() {
   const params = getRouteParams();
-  const { addToCart, setIsOpen } = useCart();
+  const { addToCart } = useCart();
   
   const [equipment, setEquipment] = useState<Equipment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,12 +53,13 @@ export default function EquipmentDetailPage() {
     setLoading(false);
   };
 
+  // Intercept the default add to cart event natively
   const handleAddToCartClick = () => {
     if (!startDate || !endDate) {
       alert('Please select your preferred rental timeline windows first.');
       return;
     }
-    // Intercept the silently adding process and wake up your new companion accessory bundle matrix!
+    // Wake up your new accessory upsell modal bundle sheet container panel!
     setIsModalOpen(true);
   };
 
@@ -74,7 +75,6 @@ export default function EquipmentDetailPage() {
     });
 
     setIsModalOpen(false);
-    setIsOpen(true); // Automatically opens your slide-out checkout CartDrawer right away!
   };
 
   if (loading) {
@@ -167,6 +167,7 @@ export default function EquipmentDetailPage() {
             )}
 
             {isLoggedIn ? (
+              /* Hard-bound to handleAddToCartClick to intercept the default checkout flow perfectly! */
               <button onClick={handleAddToCartClick} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer text-sm">
                 <ShoppingCart size={16} className="group-hover:scale-105 transition-transform" />
                 <span>Reserve Equipment & Select Add-ons</span>
@@ -180,7 +181,7 @@ export default function EquipmentDetailPage() {
         </div>
       </div>
 
-      {/* Render the modular accessory options bundle sheet tag overlay safely before closing the tree template canvas */}
+      {/* Modular accessory choices panel sheet tag overlay overlay screen layout */}
       <AccessoryModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
