@@ -21,8 +21,12 @@
     <meta property="og:image" content="https://bolt.new" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://bolt.new" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Native Multi-Domain Production Live Chat Widget Loader Block -->
+    <!-- Hardcoded Native Production Live Chat Widget Loader Block -->
     <script type="text/javascript">
       window.$crisp = [];
       window.CRISP_WEBSITE_ID = "eaf1a794-6341-4d01-8c6a-354bf0d7b0d2";
@@ -32,12 +36,8 @@
         s.src = "https://crisp.chat";
         s.async = true;
         s.crossOrigin = "anonymous";
-        d.head.appendChild(s);
+        d.getElementsByTagName("head")[0].appendChild(s);
       })();
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
