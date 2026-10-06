@@ -3,12 +3,12 @@ import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
 import { Calendar, Shield, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
-import { navigate, getRouteParams } from '@/lib/router';
+import { navigate, getParams } from '@/lib/router';
 import type { Equipment } from '@/types';
 import AccessoryModal from '@/components/AccessoryModal';
 
 export default function EquipmentDetailPage() {
-  const params = getRouteParams();
+  const params = getParams();
   const { addToCart, setIsOpen } = useCart();
   
   const [equipment, setEquipment] = useState<Equipment | null>(null);
@@ -81,6 +81,7 @@ export default function EquipmentDetailPage() {
       </div>
     );
   }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <button onClick={() => navigate('/equipment')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900 mb-6 transition-colors group">
@@ -156,7 +157,6 @@ export default function EquipmentDetailPage() {
             )}
 
             {isLoggedIn ? (
-              /* Hardcoded inline click intercept completely destroying cached functions! */
               <button 
                 onClick={() => {
                   if (!startDate || !endDate) {
