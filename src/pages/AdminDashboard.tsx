@@ -43,7 +43,6 @@ export default function AdminDashboard() {
     }));
   };
 
-  // Upload Invoice PDF directly to Supabase Storage bucket row
   const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: string) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
@@ -59,19 +58,16 @@ export default function AdminDashboard() {
       const fileName = `invoice-${orderId}-${Math.random()}.${fileExt}`;
       const filePath = `${fileName}`;
 
-      // 1. Upload the invoice document to your Supabase vault folder
       const { error: uploadError } = await supabase.storage
         .from('insurance-certificates')
         .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // 2. Fetch the public access URL link
       const { data: { publicUrl } } = supabase.storage
         .from('insurance-certificates')
         .getPublicUrl(filePath);
 
-      // 3. Update your form state and save directly into the table column row
       await supabase
         .from('orders')
         .update({ invoice_url: publicUrl })
@@ -90,6 +86,7 @@ export default function AdminDashboard() {
   const handleUpdateOrder = async (orderId: string) => {
     setSavingId(orderId);
     const formUpdates = editForms[orderId];
+    const orderData = orders.find(o => o.id === orderId);
 
     try {
       const { error } = await supabase
@@ -103,7 +100,23 @@ export default function AdminDashboard() {
         .eq('id', orderId);
 
       if (error) throw error;
-      alert('Order records updated successfully!');
+
+      if (orderData) {
+        fetch('/.netlify/functions/send-order-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customerEmail: orderData.customer_email,
+            customerName: orderData.customer_name,
+            orderId: orderId,
+            status: formUpdates.status,
+            trackingNumber: formUpdates.tracking_number,
+            trackingCarrier: formUpdates.tracking_carrier
+          })
+        }).catch(err => console.error("Email log trace error:", err));
+      }
+
+      alert('Order status saved! Notification email dispatched seamlessly.');
       fetchAllOrders();
     } catch (err: any) {
       alert('Failed to save administration metadata: ' + err.message);
@@ -111,7 +124,6 @@ export default function AdminDashboard() {
       setSavingId(null);
     }
   };
-
   if (loading) {
     return <div className="flex justify-center p-20"><Loader2 className="animate-spin text-blue-600" /></div>;
   }
@@ -132,7 +144,6 @@ export default function AdminDashboard() {
         ) : (
           orders.map((order) => (
             <div key={order.id} className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col xl:flex-row justify-between gap-6">
-              {/* Left Column: Transaction Metadata Info */}
               <div className="space-y-2 flex-1 min-w-[280px]">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-mono font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded">ID: {order.id.slice(0, 8)}</span>
@@ -149,7 +160,6 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Middle Section: Administrative Controls & Management Forms Inputs */}
               <div className="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 flex-[2.5] items-end">
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Logistics Carrier</label>
@@ -165,7 +175,6 @@ export default function AdminDashboard() {
                   <input type="text" placeholder="e.g. 1Z999AA10123" value={editForms[order.id]?.tracking_number} onChange={e => handleInputChange(order.id, 'tracking_number', e.target.value)} className="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
 
-                {/* Upload Invoice Form Trigger Element Container */}
                 <div>
                   <label className="block text-xs font-bold text-slate-600 mb-1">Portal Invoice (.PDF)</label>
                   {editForms[order.id]?.invoice_url ? (
@@ -193,7 +202,6 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              {/* Right Side: Action Button Column */}
               <div className="flex items-end justify-end">
                 <button type="button" onClick={() => handleUpdateOrder(order.id)} disabled={savingId === order.id} className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50">
                   {savingId === order.id ? <Loader2 className="animate-spin w-3.5 h-3.5" /> : <Save size={14} />}
