@@ -23,6 +23,21 @@
     <meta name="twitter:image" content="https://bolt.new" />
   </head>
   <body>
+    <!-- Forceful Service Worker Cache Demolition Block -->
+    <script type="text/javascript">
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (let registration of registrations) {
+            registration.unregister().then(function() {
+              console.log('Stale mobile PWA service worker successfully demolished.');
+            });
+          }
+        });
+      }
+      // Instantly clear the browser's standard sessionStorage cache vectors
+      window.sessionStorage.clear();
+    </script>
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
@@ -32,7 +47,7 @@
       (function(){
         var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
         s1.async=true;
-        s1.src='https://embed.tawk.to/6ac5227ab2204734d41d032d/1k490tbf5';
+        s1.src='https://tawk.to';
         s1.charset='UTF-8';
         s1.setAttribute('crossorigin','*');
         s0.parentNode.insertBefore(s1,s0);
