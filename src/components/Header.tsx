@@ -5,12 +5,14 @@ import { useCart } from '@/context/CartContext';
 
 export default function Header() {
   const [currentRoute, setCurrentRoute] = useState(typeof window !== 'undefined' ? window.location.hash : '');
-  const { cart, setIsOpen } = useCart();
+  const cartContext = useCart();
+  const cart = cartContext?.cart || [];
+  const setIsOpen = cartContext?.setIsOpen;
+  
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Sync current hash route changes seamlessly
     const handleHashChange = () => setCurrentRoute(window.location.hash);
     window.addEventListener('hashchange', handleHashChange);
 
@@ -28,9 +30,9 @@ export default function Header() {
     };
   }, []);
 
-  const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+  // Safe fallback reduce mapping that guarantees zero white-screen crashes
+  const totalItems = Array.isArray(cart) ? cart.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
-  // Native navigation fallback handler bypassing custom router framework dependencies completely
   const handleNav = (path: string) => {
     window.location.hash = path;
     setMobileMenuOpen(false);
@@ -41,7 +43,6 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20 items-center">
           
-          {/* Brand Logo Navigation Anchor Section */}
           <button 
             onClick={() => handleNav('/')} 
             className="flex items-center gap-3 group text-left cursor-pointer bg-transparent border-0"
@@ -50,13 +51,16 @@ export default function Header() {
               src="/icon-192.svg" 
               alt="lidar.rentals logo" 
               className="w-11 h-11 object-contain rounded-xl shadow-sm group-hover:scale-105 transition-transform" 
+              onError={(e) => {
+                // Fallback rendering anchor logic if asset storage caches clear slowly
+                e.currentTarget.style.display = 'none';
+              }}
             />
             <span className="text-xl font-black text-slate-900 tracking-tight">
               lidar<span className="text-blue-600">.rentals</span>
             </span>
           </button>
 
-          {/* Desktop Navigation Link Arrays */}
           <nav className="hidden md:flex items-center gap-8">
             <button 
               onClick={() => handleNav('/equipment')} 
@@ -76,9 +80,7 @@ export default function Header() {
             </button>
           </nav>
 
-          {/* User Controls Panel Actions */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Safe admin gate verification */}
             {user && user.email === 'your-admin-email@domain.com' && (
               <button 
                 onClick={() => handleNav('/admin')} 
@@ -90,7 +92,7 @@ export default function Header() {
             )}
 
             <button 
-              onClick={() => setIsOpen(true)} 
+              onClick={() => setIsOpen && setIsOpen(true)} 
               className="relative p-2.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 rounded-xl transition-all cursor-pointer group bg-transparent border-0"
             >
               <ShoppingCart size={21} className="group-hover:scale-105 transition-transform" />
@@ -114,10 +116,9 @@ export default function Header() {
             </button>
           </div>
 
-          {/* Mobile Menu Action Toggle Button Element */}
           <div className="flex md:hidden items-center gap-3">
             <button 
-              onClick={() => setIsOpen(true)} 
+              onClick={() => setIsOpen && setIsOpen(true)} 
               className="relative p-2 text-slate-600 bg-transparent border-0"
             >
               <ShoppingCart size={22} />
@@ -138,7 +139,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Overlay panel */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-3 shadow-inner">
           <button 
