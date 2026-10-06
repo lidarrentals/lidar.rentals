@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Shield, Truck, FileText, CheckCircle2, Loader2, Save } from 'lucide-react';
+import { Shield, Truck, FileText, CheckCircle2, Loader2, Save, Upload } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
-
-  // States to hold the tracking forms as you type into fields rows
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [editForms, setEditForms] = useState<{ [key: string]: any }>({});
 
   useEffect(() => {
@@ -24,7 +23,6 @@ export default function AdminDashboard() {
     
     setOrders(data || []);
     
-    // Initialize editing data objects locally
     const forms: any = {};
     (data || []).forEach(order => {
       forms[order.id] = {
@@ -45,6 +43,50 @@ export default function AdminDashboard() {
     }));
   };
 
+  // Upload Invoice PDF directly to Supabase Storage bucket row
+  const handleInvoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>, orderId: string) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+
+    if (file.type !== 'application/pdf') {
+      alert('File block: You can only upload invoices in .pdf format!');
+      return;
+    }
+
+    setUploadingId(orderId);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `invoice-${orderId}-${Math.random()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // 1. Upload the invoice document to your Supabase vault folder
+      const { error: uploadError } = await supabase.storage
+        .from('insurance-certificates')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Fetch the public access URL link
+      const { data: { publicUrl } } = supabase.storage
+        .from('insurance-certificates')
+        .getPublicUrl(filePath);
+
+      // 3. Update your form state and save directly into the table column row
+      await supabase
+        .from('orders')
+        .update({ invoice_url: publicUrl })
+        .eq('id', orderId);
+
+      handleInputChange(orderId, 'invoice_url', publicUrl);
+      alert('Invoice PDF uploaded and linked to customer account successfully!');
+      fetchAllOrders();
+    } catch (err: any) {
+      alert('Upload failed: ' + err.message);
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
   const handleUpdateOrder = async (orderId: string) => {
     setSavingId(orderId);
     const formUpdates = editForms[orderId];
@@ -61,7 +103,7 @@ export default function AdminDashboard() {
         .eq('id', orderId);
 
       if (error) throw error;
-      alert('Order records updated successfully! Portal data sync locked.');
+      alert('Order records updated successfully!');
       fetchAllOrders();
     } catch (err: any) {
       alert('Failed to save administration metadata: ' + err.message);
@@ -123,9 +165,21 @@ export default function AdminDashboard() {
                   <input type="text" placeholder="e.g. 1Z999AA10123" value={editForms[order.id]?.tracking_number} onChange={e => handleInputChange(order.id, 'tracking_number', e.target.value)} className="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                 </div>
 
+                {/* Upload Invoice Form Trigger Element Container */}
                 <div>
-                  <label className="block text-xs font-bold text-slate-600 mb-1">Invoice Document Link URL</label>
-                  <input type="text" placeholder="https://invoices.co" value={editForms[order.id]?.invoice_url} onChange={e => handleInputChange(order.id, 'invoice_url', e.target.value)} className="w-full text-xs p-2 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                  <label className="block text-xs font-bold text-slate-600 mb-1">Portal Invoice (.PDF)</label>
+                  {editForms[order.id]?.invoice_url ? (
+                    <div className="flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-100 truncate max-w-[200px]">
+                      <FileText size={12} />
+                      <a href={editForms[order.id].invoice_url} target="_blank" rel="noreferrer" className="underline font-medium truncate">Invoice Linked</a>
+                    </div>
+                  ) : (
+                    <label className="flex items-center justify-center gap-2 bg-slate-50 border border-slate-300 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-100 transition-colors shadow-sm w-full">
+                      {uploadingId === order.id ? <Loader2 className="animate-spin w-3.5 h-3.5" /> : <Upload size={13} />}
+                      <span>{uploadingId === order.id ? 'Uploading...' : 'Upload Invoice'}</span>
+                      <input type="file" accept=".pdf" onChange={(e) => handleInvoiceUpload(e, order.id)} className="hidden" disabled={uploadingId === order.id} />
+                    </label>
+                  )}
                 </div>
 
                 <div>
