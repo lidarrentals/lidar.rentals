@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ShoppingCart, User, Menu, X, Shield } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { navigate, getRoute } from '@/lib/router';
+import { navigate } from '@/lib/router';
 
 export default function Header() {
-  const currentRoute = getRoute ? getRoute() : window.location.hash;
+  // Uses a direct browser location link lookup to bypass custom utility errors safely
+  const currentRoute = typeof window !== 'undefined' ? window.location.hash : '';
   const { cart, setIsOpen } = useCart();
   const [user, setUser] = useState<any>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    // Check for active authenticated registration sessions instantly
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
@@ -42,7 +42,7 @@ export default function Header() {
               className="w-11 h-11 object-contain rounded-xl shadow-sm group-hover:scale-105 transition-transform" 
             />
             <span className="text-xl font-black text-slate-900 tracking-tight">
-              lidar<span className="text-blue-600">. rentals</span>
+              lidar<span className="text-blue-600">.rentals</span>
             </span>
           </button>
 
@@ -68,7 +68,7 @@ export default function Header() {
 
           {/* User Controls Panel Actions */}
           <div className="hidden md:flex items-center gap-4">
-            {/* Show an Operational link if your personal master user email matches admin variables */}
+            {/* Replace with your exact email to safely render your operational panel link */}
             {user?.email === 'your-admin-email@domain.com' && (
               <button 
                 onClick={() => navigate('/admin')} 
