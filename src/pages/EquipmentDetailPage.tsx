@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
-import { Calendar, Shield, ShoppingCart, ArrowLeft, Loader2, CheckCircle } from 'lucide-react';
+import { Calendar, Shield, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
 import { navigate, getRouteParams } from '@/lib/router';
 import type { Equipment } from '@/types';
@@ -9,7 +9,7 @@ import AccessoryModal from '@/components/AccessoryModal';
 
 export default function EquipmentDetailPage() {
   const params = getRouteParams();
-  const { addToCart } = useCart();
+  const { addToCart, setIsOpen } = useCart();
   
   const [equipment, setEquipment] = useState<Equipment | null>(null);
   const [loading, setLoading] = useState(true);
@@ -19,14 +19,13 @@ export default function EquipmentDetailPage() {
   const [rentalDays, setRentalDays] = useState(1);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
-  // Dynamic modular pop-up visibility gate trackers
+  // Explicitly initialize modal tracking gates to start as hidden
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (params?.id) {
       fetchProductDetails(params.id);
     }
-    // Listen for public session auth context tokens instantly
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
     });
@@ -53,28 +52,21 @@ export default function EquipmentDetailPage() {
     setLoading(false);
   };
 
-  // Intercept the default add to cart event natively
-  const handleAddToCartClick = () => {
-    if (!startDate || !endDate) {
-      alert('Please select your preferred rental timeline windows first.');
-      return;
-    }
-    // Wake up your new accessory upsell modal bundle sheet container panel!
-    setIsModalOpen(true);
-  };
-
   const handleFinishBundleAddToCart = (selectedAccessories: Equipment[]) => {
     if (!equipment) return;
 
-    // 1. Add your core primary machine item choice first
+    // 1. Commit the primary item choice selection
     addToCart(equipment, rentalDays, startDate, endDate, quantity);
 
-    // 2. Loop through and append every checked accessory choice right behind it using the same rental timeline windows
+    // 2. Commit every individual accessory chosen right next to it
     selectedAccessories.forEach(acc => {
       addToCart(acc, rentalDays, startDate, endDate, 1);
     });
 
     setIsModalOpen(false);
+    
+    // Explicitly wake up the CartDrawer ONLY after the choices modal bundle sheet finishes saving its data arrays!
+    setIsOpen(true);
   };
 
   if (loading) {
@@ -97,7 +89,6 @@ export default function EquipmentDetailPage() {
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white border border-slate-200 rounded-3xl p-6 md:p-8 shadow-sm">
-        {/* Left Side: Product Showcase Gallery Images Container View */}
         <div className="space-y-4">
           <div className="aspect-[4/3] bg-slate-50 rounded-2xl overflow-hidden border border-slate-100">
             {equipment.image_url ? (
@@ -112,7 +103,6 @@ export default function EquipmentDetailPage() {
           </div>
         </div>
 
-        {/* Right Side: Rental Pricing Operations Form Dashboard */}
         <div className="flex flex-col justify-between h-full space-y-6">
           <div>
             <span className="text-xs font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100 inline-block mb-3">Professional Asset</span>
@@ -134,7 +124,6 @@ export default function EquipmentDetailPage() {
               </div>
             </div>
 
-            {/* Selection Inputs Form Box elements */}
             <div className="space-y-4 pt-2">
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -167,9 +156,18 @@ export default function EquipmentDetailPage() {
             )}
 
             {isLoggedIn ? (
-              /* Hard-bound to handleAddToCartClick to intercept the default checkout flow perfectly! */
-              <button onClick={handleAddToCartClick} className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer text-sm">
-                <ShoppingCart size={16} className="group-hover:scale-105 transition-transform" />
+              /* Hardcoded inline click intercept completely destroying cached functions! */
+              <button 
+                onClick={() => {
+                  if (!startDate || !endDate) {
+                    alert('Please select your preferred rental timeline windows first.');
+                    return;
+                  }
+                  setIsModalOpen(true);
+                }} 
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 group cursor-pointer text-sm"
+              >
+                <ShoppingCart size={16} />
                 <span>Reserve Equipment & Select Add-ons</span>
               </button>
             ) : (
@@ -181,7 +179,6 @@ export default function EquipmentDetailPage() {
         </div>
       </div>
 
-      {/* Modular accessory choices panel sheet tag overlay overlay screen layout */}
       <AccessoryModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
