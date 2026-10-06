@@ -6,16 +6,17 @@ import CartDrawer from '@/components/CartDrawer';
 export default function Layout({ children }: { children: ReactNode }) {
   
   useEffect(() => {
-    // 1. Initialize the global window container configuration arrays
+    // Standard direct browser script setup module
     (window as any).$crisp = [];
-    (window as any).CRISP_WEBSITE_ID = "eaf1a794-6341-4d01-8c6a-354bf0d7b0d2";
-
-    // 2. Corrected element injection sequence targeting the document head safely
     const d = document;
     const s = d.createElement("script");
     s.src = "https://crisp.chat";
     s.async = true;
-    d.head.appendChild(s); // Uses the direct, bulletproof .head shortcut
+    
+    // Explicitly add your exact web profile ID signature directly into the script data attribute parameters
+    s.setAttribute("data-id", "eaf1a794-6341-4d01-8c6a-354bf0d7b0d2");
+    
+    d.head.appendChild(s);
   }, []);
 
   return (
