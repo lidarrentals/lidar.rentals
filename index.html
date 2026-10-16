@@ -38,5 +38,63 @@
       })();
     </script>
     <!-- End of Tawk.to Script -->
+    <!-- STRIPE CHECKOUT SCRIPT -->
+<script>
+  // 1. Find your checkout button in the HTML. 
+  // (Change '#checkout-button' to match the actual ID or Class name of your cart button)
+  const checkoutButton = document.querySelector('#checkout-button');
+
+  if (checkoutButton) {
+    checkoutButton.addEventListener('click', async () => {
+      // Show a temporary loading state
+      checkoutButton.innerText = "Connecting to Stripe...";
+      checkoutButton.disabled = true;
+
+      // 2. Gather your cart items dynamically. 
+      // (Replace this static list with whatever data array your cart system naturally tracks)
+      const activeCartItems = [
+        {
+          name: "LiDAR Equipment Rental",
+          price: 299.00,  // Price in dollars
+          quantity: 1
+        }
+      ];
+
+      try {
+        // 3. Fire the request over to your newly deployed Supabase Edge Function
+        const response = await fetch('https://supabase.co', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cartItems: activeCartItems }),
+        });
+
+        const data = await response.json();
+
+        // 4. If Supabase successfully returns the Stripe link, forward the user there!
+        if (data.url) {
+          window.location.href = data.url;
+        } else {
+          console.error("Stripe Checkout Error:", data.error);
+          alert("Payment setup failed: " + data.error);
+          resetButton();
+        }
+      } catch (err) {
+        console.error("Network connection error:", err);
+        alert("Failed to reach checkout backend server.");
+        resetButton();
+      }
+    });
+  }
+
+  function resetButton() {
+    if (checkoutButton) {
+      checkoutButton.innerText = "Checkout";
+      checkoutButton.disabled = false;
+    }
+  }
+</script>
+
   </body>
 </html>
