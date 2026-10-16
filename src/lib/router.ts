@@ -1,48 +1,49 @@
 import { useState, useEffect } from 'react';
 
-export interface Route {
-  path: string;
-  params: Record<string, string>;
-}
+// Centralized route listener that cleans up query parameters attached by Stripe
+export function getCleanCurrentRoute(): string {
+    if (typeof window === 'undefined') return '/';
 
-export function useRouter(): Route {
-  const [route, setRoute] = useState<Route>(() => parseHash());
+    // Grab the raw hash path (e.g., "#/checkout?success=true")
+    let hash = window.location.hash || '#/';
 
-  useEffect(() => {
-    const onHashChange = () => setRoute(parseHash());
-    window.addEventListener('hashchange', onHashChange);
-    return () => window.removeEventListener('hashchange', onHashChange);
-  }, []);
+    // Remove the front '#' character
+    hash = hash.replace(/^#/, '');
 
-  return route;
-}
-
-export function navigate(path: string): void {
-  window.location.hash = path;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-function parseHash(): Route {
-  const hash = window.location.hash.slice(1) || '/';
-  return { path: hash, params: {} };
-}
-
-export function matchRoute(
-  route: Route,
-  pattern: string
-): Record<string, string> | null {
-  const hashParts = route.path.split('/').filter(Boolean);
-  const patternParts = pattern.split('/').filter(Boolean);
-
-  if (hashParts.length !== patternParts.length) return null;
-
-  const params: Record<string, string> = {};
-  for (let i = 0; i < patternParts.length; i++) {
-    if (patternParts[i].startsWith(':')) {
-      params[patternParts[i].slice(1)] = decodeURIComponent(hashParts[i]);
-    } else if (patternParts[i] !== hashParts[i]) {
-      return null;
+    // Slice away any trailing query arguments or question marks attached by Stripe
+    const questionMarkIndex = hash.indexOf('?');
+    if (questionMarkIndex !== -1) {
+        hash = hash.substring(0, questionMarkIndex);
     }
-  }
-  return params;
+
+    return hash || '/';
 }
+
+// Bypasses the 404 error by matching the clean path cleanly
+export function matchRoute(currentRoute: string, targetRoute: string): boolean {
+    const cleanCurrent = currentRoute.startsWith('/') ? currentRoute : `/${currentRoute}`;
+    const cleanTarget = targetRoute.startsWith('/') ? targetRoute : `/${targetRoute}`;
+    return cleanCurrent === cleanTarget;
+}
+
+export function navigate(to: string) {
+    window.location.hash = to.startsWith('/') ? to : `/${to}`;
+}
+
+export function useCurrentRoute() {
+    const [route, setRoute] = useState(getCleanCurrentRoute());
+
+    useEffect(() => {
+        const handleHashChange = () => {
+            setRoute(getCleanCurrentRoute());
+        };
+
+        window.addEventListener('hashchange', handleHashChange);
+        return () => window.removeEventListener('hashchange', handleHashChange);
+    }, []);
+
+    return route;
+}
+
+// FIX: This alias connects App.tsx to the correct hook and unfreezes the site
+export { useCurrentRoute as useRouter };
