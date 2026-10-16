@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Shield, Truck, FileText, CheckCircle2, Loader2, Save, Upload } from 'lucide-react';
+import { Shield, FileText, CheckCircle2, Loader2, Save, Upload } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
 
 export default function AdminDashboard() {

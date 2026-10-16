@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useCart } from '@/context/CartContext';
 import { supabase } from '@/lib/supabase';
-import { Calendar, Shield, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
+import { Calendar, ShoppingCart, ArrowLeft, Loader2 } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
 import { navigate } from '@/lib/router';
 import type { Equipment } from '@/types';
 import AccessoryModal from '@/components/AccessoryModal';
 
-export default function EquipmentDetailPage() {
+export default function EquipmentDetailPage({ id }: { id?: string } = {}) {
   const { addToCart, setIsOpen } = useCart();
   
   const [equipment, setEquipment] = useState<Equipment | null>(null);
@@ -27,14 +27,14 @@ export default function EquipmentDetailPage() {
   };
 
   useEffect(() => {
-    const productId = getNativeProductId();
+    const productId = id || getNativeProductId();
     if (productId) {
       fetchProductDetails(productId);
     }
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsLoggedIn(!!session);
     });
-  }, []);
+  }, [id]);
 
   useEffect(() => {
     if (startDate && endDate) {

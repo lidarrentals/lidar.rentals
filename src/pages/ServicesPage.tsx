@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ScanLine, ArrowRight, Check } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
-import { navigate } from '@/lib/router';
 import type { Service } from '@/types';
 import ServiceCard from '@/components/ServiceCard';
 

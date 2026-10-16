@@ -95,7 +95,30 @@ export default function HomePage() {
         </div>
       </section>
 
-
+      {/* Categories */}
+      {categories.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-slate-900">Explore by Category</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {categories.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => navigate('/equipment')}
+                className="p-4 rounded-2xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-md transition-all text-left flex items-center justify-between group"
+              >
+                <div>
+                  <h3 className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
+                    {cat.name}
+                  </h3>
+                  <span className="text-xs text-slate-400">View Catalog &rarr;</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Featured equipment */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { useCart } from '@/context/CartContext';
-import { Shield, Loader2, Search, SlidersHorizontal, Sliders, Smartphone, Download, X } from 'lucide-react';
+import { Loader2, Search, SlidersHorizontal, Smartphone, Download, X } from 'lucide-react';
 import { formatCurrency } from '@/lib/pricing';
 import { navigate } from '@/lib/router';
 import type { Equipment } from '@/types';
