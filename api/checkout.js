@@ -43,7 +43,8 @@ export default async function handler(req, res) {
       if (!Number.isFinite(price) || price <= 0) return reply(res, 400, { error: 'A valid rental price is not configured for ' + product.name + '.' });
       line_items.push({ price_data: { currency: 'usd', product_data: { name: product.name + ' (' + item.rentalPeriod + ' rental)', description: (item.startDate || '') + ' to ' + (item.endDate || '') }, unit_amount: Math.round(price * 100) }, quantity: qty });
     }
-    // Shipping is deliberately omitted until its price is verified server-side.
+    // Fail closed: do not charge for equipment until delivery and tax are included in server-verified pricing.
+    return reply(res, 503, { error: 'Online payment is temporarily unavailable while delivery and tax pricing are being connected. No payment was taken. Please contact LiDAR.Rentals to confirm the complete amount.' });
     const origin = req.headers.origin || 'https://lidar.rentals';
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const session = await stripe.checkout.sessions.create({
