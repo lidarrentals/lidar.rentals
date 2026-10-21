@@ -1,6 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
 
+export const config = { api: { bodyParser: { sizeLimit: '3mb' } } };
+
 const AGREEMENT_VERSION = 'lidar-rentals-equipment-rental-v1-2026-10-21';
 const json = (res, status, body) => res.status(status).json(body);
 
