@@ -43,35 +43,42 @@ export default async function handler(req, res) {
     requestId = inserted.id;
 
     // Email is attempted after saving. If not configured or email fails, the request remains saved as pending review.
-    if (process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) {
-      const emailResponse = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM_EMAIL,
-          to: ['lidar.rentals@gmail.com'],
-          subject: 'Service request pending review: ' + service.name + ' (' + inserted.id + ')',
-          text: [
-            'A new service request requires manual review. No payment has been taken.',
-            'Request ID: ' + inserted.id,
-            'Service: ' + service.name,
-            'Customer: ' + customer.customer_name.trim(),
-            'Email: ' + customer.customer_email.trim(),
-            'Phone: ' + String(customer.customer_phone || ''),
-            'Company: ' + String(customer.company || ''),
-            'Site: ' + customer.shipping_address.trim(),
-            'Dates: ' + startDate + ' to ' + endDate,
-            'Duration: ' + servicePeriod,
-            'Displayed quote: ' + price,
-            'Notes: ' + String(notes || '').trim().slice(0, 10000)
-          ].join('\n')
-        })
-      });
-      if (!emailResponse.ok) console.error('[services/request] request saved, email delivery failed:', await emailResponse.text());
+    let emailConfigured = Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL);
+    let emailSent = false;
+    if (emailConfigured) {
+      try {
+        const emailResponse = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM_EMAIL,
+            to: ['lidar.rentals@gmail.com'],
+            subject: 'Service request pending review: ' + service.name + ' (' + inserted.id + ')',
+            text: [
+              'A new service request requires manual review. No payment has been taken.',
+              'Request ID: ' + inserted.id,
+              'Service: ' + service.name,
+              'Customer: ' + customer.customer_name.trim(),
+              'Email: ' + customer.customer_email.trim(),
+              'Phone: ' + String(customer.customer_phone || ''),
+              'Company: ' + String(customer.company || ''),
+              'Site: ' + customer.shipping_address.trim(),
+              'Dates: ' + startDate + ' to ' + endDate,
+              'Duration: ' + servicePeriod,
+              'Displayed quote: ' + price,
+              'Notes: ' + String(notes || '').trim().slice(0, 10000)
+            ].join('\\n')
+          })
+        });
+        emailSent = emailResponse.ok;
+        if (!emailSent) console.error('[services/request] saved request; email provider rejected notification:', (await emailResponse.text()).slice(0, 1000));
+      } catch (emailError) {
+        console.error('[services/request] saved request; notification attempt failed:', emailError);
+      }
     } else {
-      console.error('[services/request] request saved but RESEND_API_KEY is not configured; email not sent.');
+      console.error('[services/request] request saved but email credentials/sender are not configured.');
     }
-    return send(201, { requestId, status: 'pending_review', emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) });
+    return send(201, { requestId, status: 'pending_review', emailConfigured, emailSent });
   } catch (error) {
     console.error('[services/request] failed:', error);
     return send(500, { error: 'We could not submit your service request. Please try again.' });
