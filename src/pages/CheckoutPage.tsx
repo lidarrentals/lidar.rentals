@@ -79,6 +79,7 @@ export default function CheckoutPage() {
       </button>
       <h1 className="text-3xl font-bold text-slate-900">Checkout</h1>
       {mixedCart && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">Equipment rentals and services must be checked out separately. Remove one type from your cart before continuing. Service requests follow the separate intake and manual-review process.</p>}
+      {serviceItems.length > 0 && equipmentItems.length === 0 && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">This cart contains services, not rental equipment. Do not pay by Stripe here. Service requests must go through the service intake form and manual approval. That intake submission flow still needs to be connected before this branch is ready to deploy.</p>}
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-5">
           <section className="bg-white rounded-2xl border border-slate-200 p-6">
@@ -118,7 +119,7 @@ export default function CheckoutPage() {
             shippingCost={shippingCost}
             agreementId={agreementId}
             customer={form}
-            disabled={mixedCart || (equipmentItems.length > 0 && !agreementId)}
+            disabled={mixedCart || serviceItems.length > 0 || (equipmentItems.length > 0 && !agreementId)}
           />
         </div>
       </div>
