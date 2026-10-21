@@ -180,7 +180,7 @@ export default function CheckoutPage() {
             shippingCost={shippingCost}
             agreementId={agreementId}
             customer={form}
-            disabled={mixedCart || serviceItems.length > 0 || (equipmentItems.length > 0 && (!agreementId || true))}
+            disabled={mixedCart || serviceItems.length > 0 || equipmentItems.length > 0}
           />
         </div>
       </div>
