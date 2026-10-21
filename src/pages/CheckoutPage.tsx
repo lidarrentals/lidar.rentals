@@ -17,6 +17,7 @@ export default function CheckoutPage() {
   const [serviceNotes, setServiceNotes] = useState('');
   const [serviceSubmitting, setServiceSubmitting] = useState(false);
   const [serviceSubmitted, setServiceSubmitted] = useState('');
+  const [serviceEmailWarning, setServiceEmailWarning] = useState('');
   const [serviceError, setServiceError] = useState('');
   const [form, setForm] = useState({
     customer_name: '',
@@ -72,6 +73,7 @@ export default function CheckoutPage() {
   const submitServiceRequest = async () => {
     setServiceError('');
     setServiceSubmitted('');
+    setServiceEmailWarning('');
     if (serviceItems.length !== 1) {
       setServiceError('Submit one service request at a time. Remove extra services from your cart first.');
       return;
@@ -91,6 +93,7 @@ export default function CheckoutPage() {
       const data = await response.json();
       if (!response.ok || !data.requestId) throw new Error(data.error || 'Service request could not be submitted.');
       setServiceSubmitted(data.requestId);
+      if (!data.emailSent) setServiceEmailWarning('Your request is saved, but the email notification was not confirmed. Please also email lidar.rentals@gmail.com with your request reference.');
       clearCart();
     } catch (error) {
       setServiceError(error instanceof Error ? error.message : 'Service request could not be submitted.');
@@ -182,7 +185,7 @@ export default function CheckoutPage() {
                 <textarea value={serviceNotes} onChange={e => setServiceNotes(e.target.value)} rows={4} maxLength={10000} className="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="Describe the site, deliverables, access requirements, or questions." />
               </label>
               {serviceError && <p role="alert" className="text-sm text-red-700">{serviceError}</p>}
-              {serviceSubmitted ? <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800"><strong>Request submitted for manual review.</strong><p className="mt-1">Reference: {serviceSubmitted}. No payment has been taken.</p><p className="mt-1">Email notification depends on server email configuration.</p></div> :
+              {serviceSubmitted ? <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800"><strong>Request submitted for manual review.</strong><p className="mt-1">Reference: {serviceSubmitted}. No payment has been taken.</p>{serviceEmailWarning && <p className="mt-2 text-sm font-medium">{serviceEmailWarning}</p>}</div> :
                 <button type="button" onClick={submitServiceRequest} disabled={serviceSubmitting || serviceItems.length !== 1} className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{serviceSubmitting ? 'Submitting request…' : 'Submit service request for review'}</button>}
             </section>
           )}
