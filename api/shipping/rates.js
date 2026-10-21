@@ -54,6 +54,15 @@ export default async function handler(req, res) {
           length: String(parcel.length), width: String(parcel.width), height: String(parcel.height),
           distance_unit: parcel.distance_unit, weight: String(parcel.weight), mass_unit: parcel.mass_unit
         }],
+        // Request Shippo/XCover insurance in the rate quote. Coverage and eligibility
+        // remain subject to Shippo/XCover terms; the quote is not a purchased policy.
+        extra: {
+          insurance: {
+            amount: String(parcel.declared_value || 50000),
+            currency: String(parcel.declared_value_currency || 'USD'),
+            content: 'Rented LiDAR equipment'
+          }
+        },
         async: false
       })
     });
