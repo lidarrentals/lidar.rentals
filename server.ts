@@ -125,6 +125,30 @@ async function startServer() {
             if (!Array.isArray(items) || items.length === 0) {
                 return res.status(400).json({ error: 'Your cart is empty.' });
             }
+            if (items.some((item: any) => item.itemType !== 'equipment')) {
+                return res.status(400).json({ error: 'Service requests must use the separate intake and manual-review process.' });
+            }
+            if (typeof req.body.agreementId !== 'string' || !req.body.agreementId) {
+                return res.status(400).json({ error: 'A saved, signed equipment rental agreement is required before payment.' });
+            }
+            const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+            const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (!supabaseUrl || !serviceKey) {
+                return res.status(503).json({ error: 'Secure agreement verification is not configured. No payment session was created.' });
+            }
+            const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+                auth: { persistSession: false, autoRefreshToken: false }
+            });
+            const { data: agreement, error: agreementError } = await supabaseAdmin
+                .from('rental_agreements')
+                .select('id, customer_email, agreement_version')
+                .eq('id', req.body.agreementId)
+                .maybeSingle();
+            if (agreementError || !agreement ||
+                agreement.agreement_version !== 'lidar-rentals-equipment-rental-v1-2026-10-21' ||
+                String(agreement.customer_email).toLowerCase() !== String(req.body.customer?.customer_email || '').trim().toLowerCase()) {
+                return res.status(400).json({ error: 'The signed agreement could not be verified for this customer. Please sign again.' });
+            }
 
             const clientOrigin = getRequestOrigin(req);
             const targetOrderId = order_id || 'ORD-' + Math.floor(100000 + Math.random() * 900000);
@@ -176,16 +200,18 @@ async function startServer() {
                     line_items: lineItems,
                     success_url: `${clientOrigin}/#/checkout?success=true&order_id=${targetOrderId}`,
                     cancel_url: `${clientOrigin}/#/checkout?cancel=true`,
+                    metadata: {
+                        rental_agreement_id: agreement.id,
+                        customer_email: String(req.body.customer?.customer_email || '').slice(0, 500),
+                        order_reference: String(targetOrderId).slice(0, 200),
+                    },
                 });
 
                 return res.json({ url: session.url });
             }
 
-            console.warn('[Stripe Checkout] STRIPE_SECRET_KEY fallback trigger.');
-            return res.json({
-                url: `${clientOrigin}/#/checkout?success=true&order_id=${targetOrderId}`,
-                mock: true,
-            });
+            console.error('[Stripe Checkout] STRIPE_SECRET_KEY is not configured; refusing to simulate payment.');
+            return res.status(503).json({ error: 'Stripe is not configured. No payment was taken. Please contact LiDAR.Rentals.' });
         } catch (err: any) {
             return res.status(500).json({ error: err.message || 'Internal server error' });
         }
