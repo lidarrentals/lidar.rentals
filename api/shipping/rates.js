@@ -9,31 +9,31 @@ export default async function handler(req, res) {
       !String(customerAddress.city || '').trim() || !String(customerAddress.zip || '').trim()) {
     return reply(res, 400, { error: 'Enter a street address, city, and postal code.' });
   }
-  let origin;
+  let warehouse;
   let parcel;
   try {
-    origin = JSON.parse(process.env.SHIPPO_ORIGIN_ADDRESS_JSON || 'null');
-    parcel = JSON.parse(process.env.SHIPPO_PARCEL_JSON || 'null');
+    warehouse = JSON.parse(process.env.SHIPPO_ORIGIN_ADDRESS_JSON || 'null');
+    // Standard rental package profile supplied by LiDAR.Rentals. Environment configuration
+    // may override it if the standard package changes. Declared value is not insurance.
+    parcel = JSON.parse(process.env.SHIPPO_PARCEL_JSON || JSON.stringify({
+      length: 26, width: 26, height: 16, weight: 50,
+      distance_unit: 'in', mass_unit: 'lb', declared_value: 50000, declared_value_currency: 'USD'
+    }));
   } catch {
-    return reply(res, 503, { error: 'Delivery origin or parcel configuration is invalid. Contact LiDAR.Rentals for a delivery quote.' });
+    return reply(res, 503, { error: 'Warehouse address or parcel configuration is invalid. Contact LiDAR.Rentals for a return-shipping quote.' });
   }
-  if (!origin?.street1 || !origin?.city || !origin?.zip || !origin?.country ||
+  if (!warehouse?.street1 || !warehouse?.city || !warehouse?.zip || !warehouse?.country ||
       !parcel?.length || !parcel?.width || !parcel?.height || !parcel?.weight ||
       !parcel?.distance_unit || !parcel?.mass_unit) {
-    return reply(res, 503, { error: 'Live delivery origin and parcel dimensions are not configured. Contact LiDAR.Rentals for a delivery quote.' });
+    return reply(res, 503, { error: 'The LiDAR.Rentals warehouse address or package dimensions are not configured. Contact LiDAR.Rentals for a return-shipping quote.' });
   }
   try {
     const response = await fetch('https://api.goshippo.com/shipments/', {
       method: 'POST',
       headers: { Authorization: 'ShippoToken ' + token, 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        // Return direction: equipment travels from the renter back to the warehouse.
         address_from: {
-          name: origin.name || 'LiDAR.Rentals',
-          street1: origin.street1, street2: origin.street2 || '',
-          city: origin.city, state: origin.state || '', zip: origin.zip,
-          country: origin.country, phone: origin.phone || '', email: origin.email || ''
-        },
-        address_to: {
           name: String(customerAddress.name || 'Customer').slice(0, 100),
           street1: String(customerAddress.street1).trim(),
           street2: String(customerAddress.street2 || '').trim(),
@@ -43,6 +43,12 @@ export default async function handler(req, res) {
           country: String(customerAddress.country || 'CA').toUpperCase(),
           phone: String(customerAddress.phone || '').trim(),
           email: String(customerAddress.email || '').trim()
+        },
+        address_to: {
+          name: warehouse.name || 'LiDAR.Rentals',
+          street1: warehouse.street1, street2: warehouse.street2 || '',
+          city: warehouse.city, state: warehouse.state || '', zip: warehouse.zip,
+          country: warehouse.country, phone: warehouse.phone || '', email: warehouse.email || ''
         },
         parcels: [{
           length: String(parcel.length), width: String(parcel.width), height: String(parcel.height),
