@@ -14,7 +14,7 @@ export default function AccountPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      if (session?.user) fetchUserOrders(session.user.email);
+      if (session?.user?.email) fetchUserOrders(session.user.email);
       setLoading(false);
     });
   }, []);
