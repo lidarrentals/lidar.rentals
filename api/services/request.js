@@ -43,12 +43,12 @@ export default async function handler(req, res) {
     requestId = inserted.id;
 
     // Email is attempted after saving. If not configured or email fails, the request remains saved as pending review.
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) {
       const emailResponse = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { Authorization: 'Bearer ' + process.env.RESEND_API_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: process.env.RESEND_FROM_EMAIL || 'LiDAR.Rentals Requests <onboarding@resend.dev>',
+          from: process.env.RESEND_FROM_EMAIL,
           to: ['lidar.rentals@gmail.com'],
           subject: 'Service request pending review: ' + service.name + ' (' + inserted.id + ')',
           text: [
@@ -71,7 +71,7 @@ export default async function handler(req, res) {
     } else {
       console.error('[services/request] request saved but RESEND_API_KEY is not configured; email not sent.');
     }
-    return send(201, { requestId, status: 'pending_review', emailConfigured: Boolean(process.env.RESEND_API_KEY) });
+    return send(201, { requestId, status: 'pending_review', emailConfigured: Boolean(process.env.RESEND_API_KEY && process.env.RESEND_FROM_EMAIL) });
   } catch (error) {
     console.error('[services/request] failed:', error);
     return send(500, { error: 'We could not submit your service request. Please try again.' });
