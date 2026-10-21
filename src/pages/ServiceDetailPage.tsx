@@ -87,24 +87,11 @@ export default function ServiceDetailPage({ id }: { id: string }) {
       lineTotal: price,
     });
 
-    supabase.from('service_bookings').insert({
-      service_id: service.id,
-      start_date: formatDateISO(startDate!),
-      end_date: formatDateISO(endDate!),
-      status: 'confirmed',
-    }).then(() => {
-      setBookings(prev => [...prev, {
-        id: cartId,
-        service_id: service.id,
-        start_date: formatDateISO(startDate!),
-        end_date: formatDateISO(endDate!),
-        status: 'confirmed',
-        created_at: new Date().toISOString(),
-      }]);
-      setAdding(false);
-      setStartDate(null);
-      setEndDate(null);
-    });
+    // Do not create a confirmed booking when the service is merely added to cart.
+    // The actual request is saved as pending_review when the intake form is submitted.
+    setAdding(false);
+    setStartDate(null);
+    setEndDate(null);
   };
 
   const features = [
