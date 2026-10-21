@@ -13,6 +13,10 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState('');
   const [shippingCost, setShippingCost] = useState(0);
   const [agreementId, setAgreementId] = useState('');
+  const [serviceNotes, setServiceNotes] = useState('');
+  const [serviceSubmitting, setServiceSubmitting] = useState(false);
+  const [serviceSubmitted, setServiceSubmitted] = useState('');
+  const [serviceError, setServiceError] = useState('');
   const [form, setForm] = useState({
     customer_name: '',
     customer_email: '',
@@ -49,6 +53,36 @@ export default function CheckoutPage() {
   const equipmentItems = items.filter(item => item.itemType === 'equipment');
   const serviceItems = items.filter(item => item.itemType === 'service');
   const mixedCart = equipmentItems.length > 0 && serviceItems.length > 0;
+
+  const submitServiceRequest = async () => {
+    setServiceError('');
+    setServiceSubmitted('');
+    if (serviceItems.length !== 1) {
+      setServiceError('Submit one service request at a time. Remove extra services from your cart first.');
+      return;
+    }
+    if (!form.customer_name.trim() || !form.customer_email.trim() || !form.shipping_address.trim()) {
+      setServiceError('Please provide your full name, valid email, and project site address above.');
+      return;
+    }
+    const item = serviceItems[0];
+    setServiceSubmitting(true);
+    try {
+      const response = await fetch('/api/services/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ serviceId: item.itemId, startDate: item.startDate, endDate: item.endDate, servicePeriod: item.rentalPeriod, customer: form, notes: serviceNotes })
+      });
+      const data = await response.json();
+      if (!response.ok || !data.requestId) throw new Error(data.error || 'Service request could not be submitted.');
+      setServiceSubmitted(data.requestId);
+      clearCart();
+    } catch (error) {
+      setServiceError(error instanceof Error ? error.message : 'Service request could not be submitted.');
+    } finally {
+      setServiceSubmitting(false);
+    }
+  };
 
   if (success) {
     return (
@@ -107,6 +141,19 @@ export default function CheckoutPage() {
             <h2 className="text-lg font-bold text-slate-900 mb-4">Delivery options</h2>
             <ShippingCalculator onRateSelect={setShippingCost} />
           </section>
+          {serviceItems.length > 0 && equipmentItems.length === 0 && (
+            <section className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
+              <h2 className="text-lg font-bold text-slate-900">Service request intake</h2>
+              <p className="text-sm text-slate-600">Submitting this form requests service availability and review. It does not take payment or confirm a booking. LiDAR.Rentals will review the request and contact you.</p>
+              {serviceItems.map(item => <div key={item.id} className="rounded-lg bg-slate-50 p-3 text-sm"><strong>{item.name}</strong><div>{item.startDate} to {item.endDate} · {item.periodLabel || item.rentalPeriod}</div></div>)}
+              <label className="block text-sm font-medium text-slate-700">Project details / requirements
+                <textarea value={serviceNotes} onChange={e => setServiceNotes(e.target.value)} rows={4} maxLength={10000} className="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="Describe the site, deliverables, access requirements, or questions." />
+              </label>
+              {serviceError && <p role="alert" className="text-sm text-red-700">{serviceError}</p>}
+              {serviceSubmitted ? <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800"><strong>Request submitted for manual review.</strong><p className="mt-1">Reference: {serviceSubmitted}. No payment has been taken.</p><p className="mt-1">Email notification depends on server email configuration.</p></div> :
+                <button type="button" onClick={submitServiceRequest} disabled={serviceSubmitting || serviceItems.length !== 1} className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{serviceSubmitting ? 'Submitting request…' : 'Submit service request for review'}</button>}
+            </section>
+          )}
           {equipmentItems.length > 0 && !mixedCart && (
             <RentalAgreementAcceptance customer={form} items={equipmentItems} onSaved={setAgreementId} />
           )}
