@@ -12,37 +12,28 @@ import AdminDashboard from './pages/AdminDashboard';
 
 function Routes() {
   const route = useRouter();
+  const cleanRoute = route.startsWith('/') ? route : '/' + route;
+  const equipmentDetail = cleanRoute.match(/^\/equipment\/([^/]+)$/);
+  const serviceDetail = cleanRoute.match(/^\/services\/([^/]+)$/);
 
-  // Try matching routes
-  const equipmentDetail = matchRoute(route, 'equipment/:id');
-  const serviceDetail = matchRoute(route, 'services/:id');
-
-  if (route.path === '/' || route.path === '') return <HomePage />;
-  if (matchRoute(route, 'equipment')) return <EquipmentCatalogPage />;
-  if (equipmentDetail) return <EquipmentDetailPage id={equipmentDetail.id} />;
-  if (matchRoute(route, 'services')) return <ServicesPage />;
-  if (serviceDetail) return <ServiceDetailPage id={serviceDetail.id} />;
-  if (matchRoute(route, 'checkout')) return <CheckoutPage />;
-  if (matchRoute(route, 'account')) return <AccountPage />;
-  if (matchRoute(route, 'admin')) return <AdminDashboard />;
+  if (cleanRoute === '/' || cleanRoute === '') return <HomePage />;
+  if (matchRoute(cleanRoute, '/equipment')) return <EquipmentCatalogPage />;
+  if (equipmentDetail) return <EquipmentDetailPage id={decodeURIComponent(equipmentDetail[1])} />;
+  if (matchRoute(cleanRoute, '/services')) return <ServicesPage />;
+  if (serviceDetail) return <ServiceDetailPage id={decodeURIComponent(serviceDetail[1])} />;
+  if (matchRoute(cleanRoute, '/checkout')) return <CheckoutPage />;
+  if (matchRoute(cleanRoute, '/account')) return <AccountPage />;
+  if (matchRoute(cleanRoute, '/admin')) return <AdminDashboard />;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-20 text-center">
       <h1 className="text-4xl font-bold text-slate-900">404</h1>
       <p className="text-slate-500 mt-3">Page not found</p>
-      <a href="#/" className="mt-6 inline-block text-blue-600 font-medium hover:underline">
-        Go home
-      </a>
+      <a href="#/" className="mt-6 inline-block text-blue-600 font-medium hover:underline">Go home</a>
     </div>
   );
 }
 
 export default function App() {
-  return (
-    <CartProvider>
-      <Layout>
-        <Routes />
-      </Layout>
-    </CartProvider>
-  );
+  return <CartProvider><Layout><Routes /></Layout></CartProvider>;
 }
