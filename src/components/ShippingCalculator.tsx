@@ -35,46 +35,21 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
     setRates([]);
 
     try {
-      const response = await fetch('/.netlify/functions/get-live-rates', {
+      const response = await fetch('/api/shipping/rates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ customerAddress: address })
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.rates && data.rates.length > 0) {
-          setRates(data.rates);
-          return;
-        }
-      }
-      throw new Error('Defaulting to standard courier rates');
-    } catch {
-      // Fallback calibrated rates for industrial LiDAR equipment courier delivery
-      const fallbackRates = [
-        {
-          id: 'rate_standard',
-          provider: 'FedEx',
-          service: 'Ground Insured Freight (2-3 Business Days)',
-          amount: '145.00',
-          currency: 'CAD',
-        },
-        {
-          id: 'rate_priority',
-          provider: 'FedEx',
-          service: 'Priority Overnight Hazardous/Lithium Insured',
-          amount: '285.00',
-          currency: 'CAD',
-        },
-        {
-          id: 'rate_whiteglove',
-          provider: 'Direct Carrier',
-          service: 'Direct Hand-Delivery & Onsite Calibration Tech (within 200km)',
-          amount: '450.00',
-          currency: 'CAD',
-        },
-      ];
-      setRates(fallbackRates);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Delivery quotes are currently unavailable.');
+      if (!Array.isArray(data.rates) || data.rates.length === 0) throw new Error('No verified delivery rates are available for this address. Contact LiDAR.Rentals for a quote.');
+      setRates(data.rates);
+      setError(null);
+    } catch (err) {
+      setRates([]);
+      setSelectedRate(null);
+      onRateSelect(0);
+      setError(err instanceof Error ? err.message : 'Delivery quotes are currently unavailable. Contact LiDAR.Rentals for a quote.');
     } finally {
       setLoading(false);
     }
@@ -132,7 +107,7 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
       {rates.length > 0 && (
         <div className="mt-6 border-t border-slate-100 pt-4">
           <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-            <Truck size={18} className="text-slate-600" /> Quotes:
+            <Truck size={18} className="text-slate-600" /> Verified delivery quotes (not yet payable online):
           </h3>
           <div className="flex flex-col gap-2.5">
             {rates.map((rate) => (
