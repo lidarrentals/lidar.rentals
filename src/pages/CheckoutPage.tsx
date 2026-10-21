@@ -12,7 +12,6 @@ export default function CheckoutPage() {
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [shippingCost, setShippingCost] = useState(0);
-  const [shippingValidated, setShippingValidated] = useState(false);
   const [agreementId, setAgreementId] = useState('');
   const [serviceNotes, setServiceNotes] = useState('');
   const [serviceSubmitting, setServiceSubmitting] = useState(false);
@@ -152,7 +151,7 @@ export default function CheckoutPage() {
           </section>
           <section className="bg-white rounded-2xl border border-slate-200 p-6">
             <h2 className="text-lg font-bold text-slate-900 mb-4">Delivery options</h2>
-            <ShippingCalculator onRateSelect={amount => { setShippingCost(amount); setShippingValidated(false); }} />
+            <ShippingCalculator onRateSelect={setShippingCost} />
             <p className="mt-3 text-sm text-amber-800">Delivery quotes are currently estimates only and are not included in the online payment. Confirm delivery pricing with LiDAR.Rentals before paying.</p>
           </section>
           {serviceItems.length > 0 && equipmentItems.length === 0 && (
@@ -171,7 +170,7 @@ export default function CheckoutPage() {
           {equipmentItems.length > 0 && !mixedCart && (
             <RentalAgreementAcceptance customer={form} items={equipmentItems} onSaved={setAgreementId} />
           )}
-          {equipmentItems.length > 0 && shippingCost > 0 && <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Online payment is disabled because the selected delivery quote has not been validated and cannot yet be charged securely. Contact LiDAR.Rentals to confirm the complete amount.</p>}
+          {equipmentItems.length > 0 && <p role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">Online payment is temporarily disabled while delivery fees and taxes are connected to secure server-side pricing. Your signed agreement can be saved, but no payment will be taken until the full amount is verified.</p>}
           {agreementId && <p className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">Signed agreement saved securely. Agreement reference: {agreementId}</p>}
         </div>
         <div>
@@ -181,7 +180,7 @@ export default function CheckoutPage() {
             shippingCost={shippingCost}
             agreementId={agreementId}
             customer={form}
-            disabled={mixedCart || serviceItems.length > 0 || (equipmentItems.length > 0 && (!agreementId || shippingCost > 0 || !shippingValidated))}
+            disabled={mixedCart || serviceItems.length > 0 || (equipmentItems.length > 0 && (!agreementId || true))}
           />
         </div>
       </div>
