@@ -113,7 +113,19 @@ export default function CheckoutPage() {
       </button>
       <h1 className="text-3xl font-bold text-slate-900">Checkout</h1>
       {mixedCart && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">Equipment rentals and services must be checked out separately. Remove one type from your cart before continuing. Service requests follow the separate intake and manual-review process.</p>}
-      {serviceItems.length > 0 && equipmentItems.length === 0 && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900">This cart contains services, not rental equipment. Do not pay by Stripe here. Service requests must go through the service intake form and manual approval. That intake submission flow still needs to be connected before this branch is ready to deploy.</p>}
+      {serviceItems.length > 0 && equipmentItems.length === 0 && (
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 space-y-4">
+          <h2 className="text-lg font-bold text-slate-900">Service request intake</h2>
+          <p className="text-sm text-slate-600">This submits a request for manual review, not a confirmed booking. No payment is taken at this stage.</p>
+          {serviceItems.map(item => <div key={item.id} className="rounded-lg bg-slate-50 p-3 text-sm"><strong>{item.name}</strong><div>{item.startDate} to {item.endDate} · {item.periodLabel || item.rentalPeriod}</div></div>)}
+          <label className="block text-sm font-medium text-slate-700">Project details / requirements
+            <textarea value={serviceNotes} onChange={e => setServiceNotes(e.target.value)} rows={4} maxLength={10000} className="mt-1 w-full rounded-lg border border-slate-300 p-3" placeholder="Describe the site, deliverables, access requirements, or questions." />
+          </label>
+          {serviceError && <p role="alert" className="text-sm text-red-700">{serviceError}</p>}
+          {serviceSubmitted ? <div role="status" className="rounded-lg border border-green-200 bg-green-50 p-4 text-green-800"><strong>Request submitted for manual review.</strong><p className="mt-1">Reference: {serviceSubmitted}. No payment has been taken.</p></div> :
+            <button type="button" onClick={submitServiceRequest} disabled={serviceSubmitting || serviceItems.length !== 1 || mixedCart} className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white disabled:opacity-50">{serviceSubmitting ? 'Submitting request…' : 'Submit service request for review'}</button>}
+        </section>
+      )}
       <div className="grid lg:grid-cols-2 gap-8">
         <div className="space-y-5">
           <section className="bg-white rounded-2xl border border-slate-200 p-6">
