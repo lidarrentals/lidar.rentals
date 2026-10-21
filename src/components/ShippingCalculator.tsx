@@ -57,7 +57,8 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
 
   const handleSelectRate = (rate: any) => {
     setSelectedRate(rate);
-    onRateSelect(parseFloat(rate.amount));
+    // Keep carrier currency separate from the rental subtotal until server-side checkout supports it.
+    onRateSelect(0);
   };
 
   return (
@@ -119,7 +120,7 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
                     <span className="text-xs text-slate-500">{rate.service}</span>
                   </div>
                 </div>
-                <span className="font-bold text-base text-slate-900">${rate.amount}</span>
+                <span className="font-bold text-base text-slate-900">{rate.currency} {rate.amount}</span>
               </label>
             ))}
           </div>
