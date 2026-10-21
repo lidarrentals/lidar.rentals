@@ -1,5 +1,3 @@
-import Shippo from 'shippo';
-
 const reply = (res, status, body) => res.status(status).set('Cache-Control', 'no-store').json(body);
 
 export default async function handler(req, res) {
@@ -25,44 +23,43 @@ export default async function handler(req, res) {
     return reply(res, 503, { error: 'Live delivery origin and parcel dimensions are not configured. Contact LiDAR.Rentals for a delivery quote.' });
   }
   try {
-    const shippo = new Shippo({ apiKeyHeader: token });
-    const shipment = await shippo.shipments.create({
-      addressFrom: {
-        name: origin.name || 'LiDAR.Rentals',
-        street1: origin.street1,
-        street2: origin.street2 || '',
-        city: origin.city,
-        state: origin.state || '',
-        zip: origin.zip,
-        country: origin.country,
-        phone: origin.phone || '',
-        email: origin.email || ''
-      },
-      addressTo: {
-        name: String(customerAddress.name || 'Customer').slice(0, 100),
-        street1: String(customerAddress.street1).trim(),
-        street2: String(customerAddress.street2 || '').trim(),
-        city: String(customerAddress.city).trim(),
-        state: String(customerAddress.state || '').trim(),
-        zip: String(customerAddress.zip).trim(),
-        country: String(customerAddress.country || 'CA').toUpperCase(),
-        phone: String(customerAddress.phone || '').trim(),
-        email: String(customerAddress.email || '').trim()
-      },
-      parcels: [{
-        length: String(parcel.length),
-        width: String(parcel.width),
-        height: String(parcel.height),
-        distanceUnit: parcel.distance_unit,
-        weight: String(parcel.weight),
-        massUnit: parcel.mass_unit
-      }],
-      async: false
+    const response = await fetch('https://api.goshippo.com/shipments/', {
+      method: 'POST',
+      headers: { Authorization: 'ShippoToken ' + token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        address_from: {
+          name: origin.name || 'LiDAR.Rentals',
+          street1: origin.street1, street2: origin.street2 || '',
+          city: origin.city, state: origin.state || '', zip: origin.zip,
+          country: origin.country, phone: origin.phone || '', email: origin.email || ''
+        },
+        address_to: {
+          name: String(customerAddress.name || 'Customer').slice(0, 100),
+          street1: String(customerAddress.street1).trim(),
+          street2: String(customerAddress.street2 || '').trim(),
+          city: String(customerAddress.city).trim(),
+          state: String(customerAddress.state || '').trim(),
+          zip: String(customerAddress.zip).trim(),
+          country: String(customerAddress.country || 'CA').toUpperCase(),
+          phone: String(customerAddress.phone || '').trim(),
+          email: String(customerAddress.email || '').trim()
+        },
+        parcels: [{
+          length: String(parcel.length), width: String(parcel.width), height: String(parcel.height),
+          distance_unit: parcel.distance_unit, weight: String(parcel.weight), mass_unit: parcel.mass_unit
+        }],
+        async: false
+      })
     });
+    const shipment = await response.json();
+    if (!response.ok) {
+      console.error('[shipping/rates] Shippo rejected quote request:', response.status, JSON.stringify(shipment).slice(0, 1500));
+      return reply(res, 502, { error: 'The carrier could not provide a verified delivery quote. Contact LiDAR.Rentals for a quote.' });
+    }
     const rates = (shipment.rates || [])
-      .filter(rate => rate.amount && rate.currency && rate.objectId)
+      .filter(rate => rate.amount && rate.currency && rate.object_id)
       .map(rate => ({
-        id: rate.objectId,
+        id: rate.object_id,
         provider: rate.provider || 'Carrier',
         service: rate.servicelevel?.name || 'Delivery service',
         amount: String(rate.amount),
