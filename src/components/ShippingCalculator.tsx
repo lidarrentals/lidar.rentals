@@ -26,7 +26,7 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
 
   const handleCalculateShipping = async () => {
     if (!address.street1 || !address.city || !address.zip) {
-      setError('Please provide your street address, city, and postal code.');
+      setError('Please provide the return pickup street address, city, and postal code.');
       return;
     }
 
@@ -64,12 +64,12 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
   return (
     <div className="p-6 bg-white">
       <h2 className="flex items-center gap-2 text-lg font-bold text-slate-900 mb-4">
-        <MapPin size={20} className="text-blue-600" /> Calculate Delivery Fees
+        <MapPin size={20} className="text-blue-600" /> Calculate Return Shipping
       </h2>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1.5">Recipient Full Name</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Return Pickup Contact Name</label>
           <input type="text" name="name" placeholder="John Smith" value={address.name} onChange={handleChange} className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
@@ -93,22 +93,29 @@ export default function ShippingCalculator({ onRateSelect }: ShippingCalculatorP
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-1.5">Country Code</label>
+          <input type="text" name="country" maxLength={2} placeholder="CA" value={address.country} onChange={(e) => setAddress({ ...address, country: e.target.value.toUpperCase() })} className="w-24 px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <p className="text-xs text-slate-500 mt-1">Use a 2-letter country code, such as CA or US.</p>
+        </div>
+
         <button 
           type="button" 
           onClick={handleCalculateShipping}
           disabled={loading} 
           className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold text-sm hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
-          {loading ? <Loader2 className="animate-spin w-4 h-4" /> : 'Get Round-Trip Rates'}
+          {loading ? <Loader2 className="animate-spin w-4 h-4" /> : 'Get Return Shipping Rates'}
         </button>
       </div>
 
+      <p className="text-xs text-slate-500 mt-3">Standard package: 26 × 26 × 16 in, 50 lb. Declared value: $50,000 USD; this is not automatically insurance coverage.</p>
       {error && <p className="text-red-600 mt-3 text-sm font-medium">{error}</p>}
 
       {rates.length > 0 && (
         <div className="mt-6 border-t border-slate-100 pt-4">
           <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-1.5">
-            <Truck size={18} className="text-slate-600" /> Verified delivery quotes (not yet payable online):
+            <Truck size={18} className="text-slate-600" /> Verified return-shipping quotes (not yet payable online):
           </h3>
           <div className="flex flex-col gap-2.5">
             {rates.map((rate) => (
