@@ -107,7 +107,7 @@ export default function CheckoutSummary({ items, total, shippingCost, agreementI
           <div className="flex justify-between text-base font-bold text-slate-900 pt-2 border-t border-slate-100 mb-4"><span>Estimated total</span><span>{formatCurrency(total + shippingCost)}</span></div>
         </div>
         <button onClick={handleCheckout} disabled={isLoading || items.length === 0 || disabled} className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl transition disabled:bg-slate-300 disabled:cursor-not-allowed text-sm flex justify-center items-center">
-          {isLoading ? 'Redirecting to Stripe…' : disabled ? 'Sign agreement to continue' : `Pay ${formatCurrency(total + shippingCost)} with Stripe`}
+          {isLoading ? 'Redirecting to Stripe…' : disabled ? 'Online payment temporarily unavailable' : `Pay ${formatCurrency(total + shippingCost)} with Stripe`}
         </button>
         <p className="text-center text-xs text-slate-400 mt-3">Payment is processed by Stripe.</p>
       </div>
