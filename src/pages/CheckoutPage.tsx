@@ -11,6 +11,7 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [paymentVerification, setPaymentVerification] = useState('');
   const [shippingCost, setShippingCost] = useState(0);
   const [agreementId, setAgreementId] = useState('');
   const [serviceNotes, setServiceNotes] = useState('');
@@ -42,12 +43,26 @@ export default function CheckoutPage() {
   useEffect(() => {
     const query = window.location.search || window.location.hash.split('?')[1] || '';
     const params = new URLSearchParams(query);
-    if (params.get('success') === 'true') {
-      setOrderId(params.get('order_id') || 'Payment confirmation pending');
-      setSuccess(true);
-      clearCart();
-      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0]);
-    }
+    const sessionId = params.get('session_id');
+    if (params.get('success') !== 'true' || !sessionId) return;
+    let active = true;
+    setPaymentVerification('Verifying payment with Stripe…');
+    fetch('/api/checkout/verify?session_id=' + encodeURIComponent(sessionId))
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok || !data.paid) throw new Error(data.error || 'Stripe has not confirmed payment.');
+        if (!active) return;
+        setOrderId(sessionId);
+        setSuccess(true);
+        setPaymentVerification('');
+        clearCart();
+        window.history.replaceState({}, document.title, window.location.pathname + window.location.hash.split('?')[0]);
+      })
+      .catch(error => {
+        if (!active) return;
+        setPaymentVerification(error instanceof Error ? error.message : 'Payment could not be verified. Please contact LiDAR.Rentals before retrying.');
+      });
+    return () => { active = false; };
   }, [clearCart]);
 
   const equipmentItems = items.filter(item => item.itemType === 'equipment');
@@ -83,6 +98,10 @@ export default function CheckoutPage() {
       setServiceSubmitting(false);
     }
   };
+
+  if (paymentVerification && !success) {
+    return <div className="max-w-2xl mx-auto px-4 py-16 text-center"><h2 className="text-2xl font-bold text-slate-900">Payment verification</h2><p role="status" className="mt-4 text-slate-600">{paymentVerification}</p><p className="mt-3 text-sm text-slate-500">Do not submit another payment until the status is confirmed. Contact LiDAR.Rentals if this message persists.</p></div>;
+  }
 
   if (success) {
     return (
