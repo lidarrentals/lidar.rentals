@@ -1,16 +1,18 @@
-const { createClient } = require('@supabase/supabase-js');
+import { createClient } from '@supabase/supabase-js';
 
 const reply = (statusCode, body) => ({ statusCode, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }, body: JSON.stringify(body) });
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') return reply(405, { error: 'Method not allowed.' });
+export default async function handler(req, res) {
+  const event = { httpMethod: req.method, body: JSON.stringify(req.body || {}), headers: req.headers };
+  const send = (status, body) => res.status(status).set('Cache-Control', 'no-store').json(body);
+  if (event.httpMethod !== 'POST') return send(405, { error: 'Method not allowed.' });
   let requestId;
   try {
     const body = JSON.parse(event.body || '{}');
     const { serviceId, startDate, endDate, servicePeriod, customer, notes } = body;
     if (!serviceId || !/^\d{4}-\d{2}-\d{2}$/.test(startDate || '') || !/^\d{4}-\d{2}-\d{2}$/.test(endDate || '') ||
-        !['2day','3day','1week'].includes(servicePeriod)) return reply(400, { error: 'Select a service, duration, and valid dates.' });
+        !['2day','3day','1week'].includes(servicePeriod)) return send(400, { error: 'Select a service, duration, and valid dates.' });
     if (startDate > endDate) return reply(400, { error: 'End date must be on or after start date.' });
     if (!customer?.customer_name?.trim() || !emailPattern.test(String(customer.customer_email || '').trim())) {
       return reply(400, { error: 'Enter your full name and a valid email address.' });
