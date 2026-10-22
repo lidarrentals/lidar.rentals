@@ -70,8 +70,20 @@ export default function CheckoutSummary({ items, total, shippingCost, agreementI
           customer,
         }),
       });
-      const data = await response.json();
-      if (!response.ok || data.error) throw new Error(data.error || 'Failed to initialize Stripe checkout session');
+      const responseText = await response.text();
+      let data: { error?: string; mock?: boolean; url?: string } = {};
+      try {
+        data = responseText ? JSON.parse(responseText) as typeof data : {};
+      } catch {
+        const plainMessage = responseText.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240);
+        console.error('Checkout endpoint returned a non-JSON response:', response.status, response.headers.get('content-type'), plainMessage);
+        throw new Error(
+          response.status === 404
+            ? 'The checkout API endpoint was not found in this deployment. Please contact LiDAR.Rentals.'
+            : `Checkout server returned an unexpected response (HTTP ${response.status}). ${plainMessage || 'No details were provided.'}`
+        );
+      }
+      if (!response.ok || data.error) throw new Error(data.error || `Checkout request failed (HTTP ${response.status}).`);
       if (data.mock) throw new Error('Stripe is not configured for live payment. No payment was taken; please contact LiDAR.Rentals.');
       if (!data.url) throw new Error('Stripe did not return a checkout URL.');
       window.location.href = data.url;
