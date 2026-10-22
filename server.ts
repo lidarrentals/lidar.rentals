@@ -6,6 +6,8 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'crypto';
 
 dotenv.config();
 
@@ -41,12 +43,111 @@ async function startServer() {
         return `${proto}://${host}`;
     };
 
+
+    // Save signed equipment-rental evidence server-side. The service-role key is
+    // server-only; the browser never receives it or direct access to the private bucket.
+    app.post('/api/rental-agreement/sign', async (req, res) => {
+        try {
+            const {
+                agreementVersion, customer, items, typedName,
+                signaturePngDataUrl, accepted, userAgent, termsText
+            } = req.body ?? {};
+
+            if (agreementVersion !== 'lidar-rentals-equipment-rental-v1-2026-10-21') {
+                return res.status(400).json({ error: 'The agreement version is invalid. Refresh checkout and try again.' });
+            }
+            if (!customer?.customer_name?.trim() || !customer?.customer_email?.trim() ||
+                !typedName?.trim() || typedName.trim().toLocaleLowerCase() !== customer.customer_name.trim().toLocaleLowerCase()) {
+                return res.status(400).json({ error: 'Customer name, email, and matching typed signature are required.' });
+            }
+            if (accepted !== true || !Array.isArray(items) || items.length === 0 ||
+                items.some((item: any) => item.itemType !== 'equipment')) {
+                return res.status(400).json({ error: 'This agreement can only be signed for equipment rentals after consent.' });
+            }
+            if (typeof signaturePngDataUrl !== 'string' ||
+                !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(signaturePngDataUrl) ||
+                signaturePngDataUrl.length > 2_000_000) {
+                return res.status(400).json({ error: 'A valid drawn PNG signature is required.' });
+            }
+            if (typeof termsText !== 'string' || termsText.length < 500 || termsText.length > 30000) {
+                return res.status(400).json({ error: 'The agreement text snapshot is missing or invalid.' });
+            }
+
+            const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+            const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (!supabaseUrl || !serviceKey) {
+                return res.status(503).json({ error: 'Agreement storage is not configured. No signature was saved; please contact LiDAR.Rentals.' });
+            }
+
+            const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+                auth: { persistSession: false, autoRefreshToken: false }
+            });
+            const png = Buffer.from(signaturePngDataUrl.slice('data:image/png;base64,'.length), 'base64');
+            const agreementId = randomUUID();
+            const objectPath = `${agreementId}/signature.png`;
+            const upload = await supabaseAdmin.storage.from('signed-rental-agreements').upload(objectPath, png, {
+                contentType: 'image/png',
+                upsert: false
+            });
+            if (upload.error) throw new Error('Could not store the signature image: ' + upload.error.message);
+
+            const insert = await supabaseAdmin.from('rental_agreements').insert({
+                id: agreementId,
+                customer_name: customer.customer_name.trim(),
+                customer_email: customer.customer_email.trim(),
+                customer_phone: String(customer.customer_phone || '').trim(),
+                company: String(customer.company || '').trim(),
+                shipping_address: String(customer.shipping_address || '').trim(),
+                agreement_version: agreementVersion,
+                terms_text: termsText,
+                items_snapshot: items,
+                typed_name: typedName.trim(),
+                signature_object_path: objectPath,
+                accepted_at: new Date().toISOString(),
+                user_agent: String(userAgent || '').slice(0, 1000)
+            }).select('id').single();
+
+            if (insert.error) {
+                await supabaseAdmin.storage.from('signed-rental-agreements').remove([objectPath]);
+                throw new Error('Could not save the signed agreement record: ' + insert.error.message);
+            }
+            return res.status(201).json({ agreementId: insert.data.id });
+        } catch (err: any) {
+            console.error('[Rental Agreement] Save failed:', err);
+            return res.status(500).json({ error: 'Unable to save the signed agreement securely. Please try again.' });
+        }
+    });
+
     app.post('/api/checkout', async (req, res) => {
         try {
             const { items, shippingCost, order_id } = req.body;
 
             if (!Array.isArray(items) || items.length === 0) {
                 return res.status(400).json({ error: 'Your cart is empty.' });
+            }
+            if (items.some((item: any) => item.itemType !== 'equipment')) {
+                return res.status(400).json({ error: 'Service requests must use the separate intake and manual-review process.' });
+            }
+            if (typeof req.body.agreementId !== 'string' || !req.body.agreementId) {
+                return res.status(400).json({ error: 'A saved, signed equipment rental agreement is required before payment.' });
+            }
+            const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+            const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+            if (!supabaseUrl || !serviceKey) {
+                return res.status(503).json({ error: 'Secure agreement verification is not configured. No payment session was created.' });
+            }
+            const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+                auth: { persistSession: false, autoRefreshToken: false }
+            });
+            const { data: agreement, error: agreementError } = await supabaseAdmin
+                .from('rental_agreements')
+                .select('id, customer_email, agreement_version')
+                .eq('id', req.body.agreementId)
+                .maybeSingle();
+            if (agreementError || !agreement ||
+                agreement.agreement_version !== 'lidar-rentals-equipment-rental-v1-2026-10-21' ||
+                String(agreement.customer_email).toLowerCase() !== String(req.body.customer?.customer_email || '').trim().toLowerCase()) {
+                return res.status(400).json({ error: 'The signed agreement could not be verified for this customer. Please sign again.' });
             }
 
             const clientOrigin = getRequestOrigin(req);
@@ -99,16 +200,18 @@ async function startServer() {
                     line_items: lineItems,
                     success_url: `${clientOrigin}/#/checkout?success=true&order_id=${targetOrderId}`,
                     cancel_url: `${clientOrigin}/#/checkout?cancel=true`,
+                    metadata: {
+                        rental_agreement_id: agreement.id,
+                        customer_email: String(req.body.customer?.customer_email || '').slice(0, 500),
+                        order_reference: String(targetOrderId).slice(0, 200),
+                    },
                 });
 
                 return res.json({ url: session.url });
             }
 
-            console.warn('[Stripe Checkout] STRIPE_SECRET_KEY fallback trigger.');
-            return res.json({
-                url: `${clientOrigin}/#/checkout?success=true&order_id=${targetOrderId}`,
-                mock: true,
-            });
+            console.error('[Stripe Checkout] STRIPE_SECRET_KEY is not configured; refusing to simulate payment.');
+            return res.status(503).json({ error: 'Stripe is not configured. No payment was taken. Please contact LiDAR.Rentals.' });
         } catch (err: any) {
             return res.status(500).json({ error: err.message || 'Internal server error' });
         }
